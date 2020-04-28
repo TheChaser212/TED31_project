@@ -11,20 +11,20 @@ ocean = {"color":"blue","icon":"≈"}
 player = {"color":"white","icon":"X","posX":1,"posY":1}
 
 biomes = [plains,mountain,desert,forest,ocean]
-iconsize = 20
-gamemap = []
-mapsize = 15
-for y in range(mapsize):
-    gamemap.append([])
-    for x in range(mapsize):
-        gamemap[y].append(random.choice(biomes))
+iconSize = 20
+gameMap = []
+mapSize = 15
+for y in range(mapSize):
+    gameMap.append([])
+    for x in range(mapSize):
+        gameMap[y].append(random.choice(biomes))
 
 """
 def load():
     global player
     save = open("gamesave.txt", "r")
     #mapline = save.readline()
-    #gamemap = mapline
+    #gameMap = mapline
     lines = save.readlines()
     for line in lines:
         splitline = line.strip().split(":")
@@ -42,7 +42,7 @@ def save():
     save.close()    
     
     save = open("gamesave.txt", "a")
-    #save.write(str(gamemap))
+    #save.write(str(gameMap))
     for item in player:
         save.write(str(item)+":"+str(player[item])+'\n')
     save.close()
@@ -50,7 +50,7 @@ def save():
 def updateMap():
     app.clearCanvas("map")
     a = 0
-    for y in gamemap:
+    for y in gameMap:
         a+=1
         b=0   
         for x in y:
@@ -58,27 +58,27 @@ def updateMap():
             if((player["posY"] == a) and (player["posX"] == b)):
                 x = player        
             name = str(a)+" "+str(b)
-            app.addCanvasRectangle("map", b*iconsize, a*iconsize, iconsize, iconsize,fill=x["color"],width=0)
-            app.addCanvasText("map", (b*iconsize)+(iconsize/2), (a*iconsize)+(iconsize/2), x["icon"])
+            app.addCanvasRectangle("map", b*iconSize, a*iconSize, iconSize, iconSize,fill=x["color"],width=0)
+            app.addCanvasText("map", (b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), x["icon"])
 
 def move(key):
     if(key == "<Left>"):
         if(player["posX"] != 1):
             player["posX"] -= 1
     elif(key == "<Right>"):
-        if(player["posX"] != mapsize):
+        if(player["posX"] != mapSize):
             player["posX"] += 1
     elif(key == "<Up>"):
         if(player["posY"] != 1):
             player["posY"] -= 1    
     elif(key == "<Down>"):
-        if(player["posY"] != mapsize):
+        if(player["posY"] != mapSize):
             player["posY"] += 1
     updateMap()
     #save()
     
 #load()
-app = gui("newmap","500x500")
+app = gui("newMap","500x500")
 
 app.addCanvas("map")
 app.setSticky("nesw")
