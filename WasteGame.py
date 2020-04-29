@@ -32,12 +32,7 @@ class armor(item):
     def description(self):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
-player = {"color":"white",
-          "icon":"X",
-          "posX":1,
-          "posY":1,
-          "inventory":[weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
-                       armor("Chestplate","A large hunk of metal",27,"Body")]}
+
 
 """
 variables
@@ -52,10 +47,16 @@ biomes = [plains,mountain,desert,forest,ocean]
 
 iconSize = 20
 gameMap = []
-mapSize = 15
+mapSize = 50
 
 loadGame = False
 
+player = {"color":"white",
+          "icon":"X",
+          "posX":mapSize/2,
+          "posY":mapSize/2,
+          "inventory":[weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                       armor("Chestplate","A large hunk of metal",27,"Body")]}
 """
 functions
 """
@@ -132,6 +133,8 @@ def move(key):
             player["posY"] += 1
             for p in playerObj:
                 map.move(p,0,iconSize)
+    map.xview_moveto((player["posX"]-5)/(mapSize+2))
+    map.yview_moveto((player["posY"]-5)/(mapSize+2))
     save()
 
 def showInventory():
@@ -155,10 +158,10 @@ app.setStretch("both")
 
 app.addLabel("title", "Waste Adventure")
 
-#app.startScrollPane("mapPane")
+app.startFrame("mapPane")
 map = app.addCanvas("map")
-map.config(height=iconSize*(mapSize+2))
-#app.stopScrollPane()
+map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=iconSize*11+1)
+app.stopFrame()
 
 if(loadGame):
     load()
