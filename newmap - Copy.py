@@ -2,6 +2,9 @@
 from appJar import gui
 import random
 
+"""
+Define classes
+"""
 class item(object):
     def __init__(self,name,desc):
         self.name = name
@@ -28,7 +31,16 @@ class armor(item):
     def description(self):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
+player = {"color":"white",
+          "icon":"X",
+          "posX":1,
+          "posY":1,
+          "inventory":[weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                       armor("Chestplate","A large hunk of metal",27,"Body")]}
 
+"""
+Generate map
+"""
 plains = {"color":"green","icon":"-"}
 mountain = {"color":"grey","icon":"▲"}
 desert = {"color":"yellow","icon":"⁕"}
@@ -36,14 +48,6 @@ forest = {"color":"green","icon":"⇑"}
 ocean = {"color":"blue","icon":"≈"}
 
 biomes = [plains,mountain,desert,forest,ocean]
-
-
-player = {"color":"white",
-          "icon":"X",
-          "posX":1,
-          "posY":1,
-          "inventory":[weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
-                       armor("Chestplate","A large hunk of metal",27,"Body")]}
 
 iconSize = 20
 gameMap = []
@@ -81,6 +85,9 @@ def save():
         save.write(str(item)+":"+str(player[item])+'\n')
     save.close()
 """
+"""
+functions
+"""
 def updateMap():
     app.clearCanvas("map")
     a = 0
@@ -112,21 +119,36 @@ def move(key):
     #save()
 
 def showInventory():
+    app.openFrame("output")
+    app.emptyCurrentContainer()
     for i in player["inventory"]:
         print(i.name)
         print(i.description())
+        
+        app.addLabel(i.name,i.name)
+        app.setLabelTooltip(i.name, i.description())
+    app.stopFrame()
 
+"""
+setup and start gui
+"""
 #load()
 app = gui("newMap")
 app.setSticky("NEWS")
 app.setStretch("both")
 
+app.addLabel("title", "Waste Adventure")
+
 app.startScrollPane("mapPane")
 map = app.addCanvas("map")
-map.config(height=iconSize*(len(gameMap)+1))
+map.config(height=1+iconSize*(len(gameMap)+1))
 app.stopScrollPane()
 
 updateMap()
+
+app.startFrame("output")
+app.addEmptyLabel("nothing")
+app.stopFrame()
 
 app.bindKeys(["<Left>","<Right>","<Up>","<Down>"], move)
 app.bindKeys(["i","<Tab>"], showInventory)
