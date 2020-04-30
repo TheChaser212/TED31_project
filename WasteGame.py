@@ -33,7 +33,13 @@ class armor(item):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
 
-
+class enemy(object):
+    def __init__(self,name,armor,damage,attackTypes):
+        self.name = name
+        self.armor = armor
+        self.damage = damage
+        self.attackTypes = attackTypes
+        
 """
 variables
 """
@@ -60,19 +66,24 @@ player = {"color":"white",
 """
 functions
 """
+
+
+def saveMap():
+    file = open("map.txt","wb")
+    pickle.dump(gameMap, file)
+    file.close()
+    
+def saveStats():
+    file = open("player.txt","wb")
+    pickle.dump(player,file)
+    file.close()    
+
 def generateMap():
     for y in range(mapSize):
         gameMap.append([])
         for x in range(mapSize):
             gameMap[y].append(random.choice(biomes))
-
-def save():
-    file = open("map.txt","wb")
-    pickle.dump(gameMap, file)
-    file.close()
-    file = open("player.txt","wb")
-    pickle.dump(player,file)
-    file.close()
+    saveMap()
 
 def load():
     global gameMap
@@ -110,32 +121,35 @@ def updateMap():
     
     map.create_rectangle(player["posX"]*iconSize, player["posY"]*iconSize, player["posX"]*iconSize+iconSize, player["posY"]*iconSize+iconSize,fill=player["color"],tags="player") 
     map.create_text((player["posX"]*iconSize)+(iconSize/2), (player["posY"]*iconSize)+(iconSize/2),text = player["icon"],tags="player")                
+    map.xview_moveto((player["posX"]-5)/(mapSize+2))
+    map.yview_moveto((player["posY"]-5)/(mapSize+2))    
 
 def move(key):
-    playerObj = map.find_withtag("player")
-    if(key == "<Left>"):
-        if(player["posX"] != 1):
-            player["posX"] -= 1
-            for p in playerObj:
-                map.move(p,-iconSize,0)
-    elif(key == "<Right>"):
-        if(player["posX"] != mapSize):
-            player["posX"] += 1
-            for p in playerObj:
-                map.move(p,iconSize,0)
-    elif(key == "<Up>"):
-        if(player["posY"] != 1):
-            player["posY"] -= 1  
-            for p in playerObj:
-                map.move(p,0,-iconSize)
-    elif(key == "<Down>"):
-        if(player["posY"] != mapSize):
-            player["posY"] += 1
-            for p in playerObj:
-                map.move(p,0,iconSize)
-    map.xview_moveto((player["posX"]-5)/(mapSize+2))
-    map.yview_moveto((player["posY"]-5)/(mapSize+2))
-    save()
+    if(app.getTabbedFrameSelectedTab("main") == "map"):
+        playerObj = map.find_withtag("player")
+        if(key == "<Left>"):
+            if(player["posX"] != 1):
+                player["posX"] -= 1
+                for p in playerObj:
+                    map.move(p,-iconSize,0)
+        elif(key == "<Right>"):
+            if(player["posX"] != mapSize):
+                player["posX"] += 1
+                for p in playerObj:
+                    map.move(p,iconSize,0)
+        elif(key == "<Up>"):
+            if(player["posY"] != 1):
+                player["posY"] -= 1  
+                for p in playerObj:
+                    map.move(p,0,-iconSize)
+        elif(key == "<Down>"):
+            if(player["posY"] != mapSize):
+                player["posY"] += 1
+                for p in playerObj:
+                    map.move(p,0,iconSize)
+        map.xview_moveto((player["posX"]-5)/(mapSize+2))
+        map.yview_moveto((player["posY"]-5)/(mapSize+2))
+    saveStats()
 
 def showInventory():
     app.openFrame("output")
@@ -152,16 +166,27 @@ def showInventory():
 setup and start gui
 """
 
-app = gui("newMap")
+app = gui("Waste Adventure")
 app.setSticky("NEWS")
 app.setStretch("both")
 
 app.addLabel("title", "Waste Adventure")
 
-app.startFrame("mapPane")
+app.startTabbedFrame("main")
+app.setTabbedFrameTabExpand("main", expand=True)
+app.startTab("map")
 map = app.addCanvas("map")
-map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=iconSize*11+1)
-app.stopFrame()
+map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1)
+app.stopTab()
+
+app.startTab("inventory")
+
+app.stopTab()
+
+app.startTab("crafting")
+
+app.stopTab()
+app.stopTabbedFrame()
 
 if(loadGame):
     load()
