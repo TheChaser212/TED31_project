@@ -131,6 +131,12 @@ def updateMap():
     map.xview_moveto((player["posX"]-5)/(mapSize+2))
     map.yview_moveto((player["posY"]-5)/(mapSize+2))    
 
+def onMove():
+    map.xview_moveto((player["posX"]-5)/(mapSize+2))
+    map.yview_moveto((player["posY"]-5)/(mapSize+2))
+    
+    fight()#testing    
+
 def keys(key):
     currentTab = app.getTabbedFrameSelectedTab("main")
     
@@ -140,26 +146,27 @@ def keys(key):
             if(player["posX"] != 1):
                 player["posX"] -= 1
                 for p in playerObj:
-                    map.move(p,-iconSize,0)
+                    map.move(p,-iconSize,0) #thing, x, y
+                onMove()
         elif(key == "<Right>"):
             if(player["posX"] != mapSize):
                 player["posX"] += 1
                 for p in playerObj:
                     map.move(p,iconSize,0)
+                onMove()
         elif(key == "<Up>"):
             if(player["posY"] != 1):
                 player["posY"] -= 1  
                 for p in playerObj:
                     map.move(p,0,-iconSize)
+                onMove()
         elif(key == "<Down>"):
             if(player["posY"] != mapSize):
                 player["posY"] += 1
                 for p in playerObj:
                     map.move(p,0,iconSize)
-        map.xview_moveto((player["posX"]-5)/(mapSize+2))
-        map.yview_moveto((player["posY"]-5)/(mapSize+2))
+                onMove()
         
-        fight()#testing
         
     elif(currentTab == "combat"):
         global currentEnemy
@@ -200,12 +207,17 @@ def fight():
     currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
     
     app.setTabbedFrameSelectedTab("main","combat",False)
+    
     app.setTabbedFrameDisabledTab("main","map", True)
     app.setTabbedFrameDisabledTab("main","inventory", True)
+    app.setTabbedFrameDisabledTab("main","combat", False)  
     
 def endCombat(winner="none"):
+    app.setTabbedFrameSelectedTab("main","map",False)
+    
     app.setTabbedFrameDisabledTab("main","map", False)
     app.setTabbedFrameDisabledTab("main","inventory", False)    
+    app.setTabbedFrameDisabledTab("main","combat", True)  
     if(winner == "enemy"):
         print("you died")
     elif(winner == "player"):
@@ -228,7 +240,7 @@ app.setTabbedFrameTabExpand("main", expand=True)
 app.setTabbedFrameChangeCommand("main", updateInventory)
 app.startTab("map")
 map = app.addCanvas("map")
-map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1)
+map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1) #x1, y1, x2, y2, height
 app.stopTab()
 
 app.startTab("inventory")
