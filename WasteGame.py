@@ -6,7 +6,7 @@ import pickle
 """
 Define classes
 """
-class item(object):
+class Item(object):
     def __init__(self,name,desc):
         self.name = name
         self.desc = desc
@@ -14,7 +14,7 @@ class item(object):
     def description(self):
         return self.desc
         
-class weapon(item): #subclass of item
+class Weapon(Item): #subclass of item
     def __init__(self,name,desc,damage,attackTypes):
         super().__init__(name,desc) #calls init of item class
         self.damage = damage
@@ -23,7 +23,7 @@ class weapon(item): #subclass of item
     def description(self):
         return "%s, it does %i damage"%(super().description(),self.damage)
 
-class armor(item):
+class Armor(Item):
     def __init__(self,name,desc,armor,slot):
         super().__init__(name,desc) #calls init of item class
         self.armor = armor
@@ -33,11 +33,12 @@ class armor(item):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
 
-class enemy(object):
-    def __init__(self,name,armor,damage,attackTypes):
+class Enemy(object):
+    def __init__(self,name,health,damage,armor,attackTypes):
         self.name = name
-        self.armor = armor
+        self.health = health
         self.damage = damage
+        self.armor = armor
         self.attackTypes = attackTypes
         
 """
@@ -61,8 +62,14 @@ player = {"color":"white",
           "icon":"X",
           "posX":mapSize/2,
           "posY":mapSize/2,
-          "inventory":[weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
-                       armor("Chestplate","A large hunk of metal",27,"Body")]}
+          "health":20,
+          "damage":10,
+          "armor":5,
+          "inventory":[Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                       Armor("Chestplate","A large hunk of metal",27,"Body")]}
+
+currentEnemy = Enemy("name",10,5,10,["attack1","attack2"])
+
 """
 functions
 """
@@ -124,8 +131,10 @@ def updateMap():
     map.xview_moveto((player["posX"]-5)/(mapSize+2))
     map.yview_moveto((player["posY"]-5)/(mapSize+2))    
 
-def move(key):
-    if(app.getTabbedFrameSelectedTab("main") == "map"):
+def keys(key):
+    currentTab = app.getTabbedFrameSelectedTab("main")
+    
+    if(currentTab == "map"):
         playerObj = map.find_withtag("player")
         if(key == "<Left>"):
             if(player["posX"] != 1):
@@ -149,19 +158,61 @@ def move(key):
                     map.move(p,0,iconSize)
         map.xview_moveto((player["posX"]-5)/(mapSize+2))
         map.yview_moveto((player["posY"]-5)/(mapSize+2))
+        
+        fight()#testing
+        
+    elif(currentTab == "combat"):
+        global currentEnemy
+        
+        print("Player")
+        print("health:%i,damage:%i,armor:%i"%(player["health"],player["damage"],player["armor"]))        
+        
+        print("Enemy")
+        print("name:%s,health:%i,damage:%i,armor:%i"%(currentEnemy.name,currentEnemy.health,currentEnemy.damage,currentEnemy.armor))
+        
+        if(key == "<a>"):
+            print("attack")
+            currentEnemy.health -= (player["damage"] - currentEnemy.armor)
+        elif(key == "<b>"):
+            print("block")
+            player["health"] -= (currentEnemy.damage - player["armor"])
+        
+        if(player["health"] <= 0):
+            endCombat("enemy")
+        elif(key == "<r>"): #elif so you can't run if you're dead
+            print("run")
+            endCombat()
+        elif(currentEnemy.health <= 0):
+            endCombat("player")
     saveStats()
 
-def showInventory():
-    app.openFrame("output")
+def updateInventory():
+    if(app.getTabbedFrameSelectedTab("main") != "inventory"):
+        return
+    app.openTab("main","inventory")
     app.emptyCurrentContainer()
     for i in player["inventory"]:
-        print(i.name)
-        print(i.description())
-        
         app.addLabel(i.name,i.name)
         app.setLabelTooltip(i.name, i.description())
-    app.stopFrame()
 
+def fight():
+    global currentEnemy
+    currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
+    
+    app.setTabbedFrameSelectedTab("main","combat",False)
+    app.setTabbedFrameDisabledTab("main","map", True)
+    app.setTabbedFrameDisabledTab("main","inventory", True)
+    
+def endCombat(winner="none"):
+    app.setTabbedFrameDisabledTab("main","map", False)
+    app.setTabbedFrameDisabledTab("main","inventory", False)    
+    if(winner == "enemy"):
+        print("you died")
+    elif(winner == "player"):
+        print("you win")
+        player["damage"] += 1
+    elif(winner == "none"):
+        print("you're a coward")
 """
 setup and start gui
 """
@@ -174,17 +225,18 @@ app.addLabel("title", "Waste Adventure")
 
 app.startTabbedFrame("main")
 app.setTabbedFrameTabExpand("main", expand=True)
+app.setTabbedFrameChangeCommand("main", updateInventory)
 app.startTab("map")
 map = app.addCanvas("map")
 map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1)
 app.stopTab()
 
 app.startTab("inventory")
-
+app.addLabel("inv","inventory")
 app.stopTab()
 
-app.startTab("crafting")
-
+app.startTab("combat")
+app.addLabel("fight","combat")
 app.stopTab()
 app.stopTabbedFrame()
 
@@ -194,10 +246,5 @@ else:
     generateMap()
 updateMap()
 
-app.startFrame("output")
-app.addEmptyLabel("nothing")
-app.stopFrame()
-
-app.bindKeys(["<Left>","<Right>","<Up>","<Down>"], move)
-app.bindKeys(["<i>","<Tab>"], showInventory)
+app.bindKeys(["<Left>","<Right>","<Up>","<Down>","<a>","<b>","<r>"], keys)
 app.go()
