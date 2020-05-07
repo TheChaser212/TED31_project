@@ -73,8 +73,6 @@ currentEnemy = Enemy("name",10,5,10,["attack1","attack2"])
 """
 functions
 """
-
-
 def saveMap():
     file = open("map.txt","wb")
     pickle.dump(gameMap, file)
@@ -186,11 +184,11 @@ def keys(key):
         
         if(player["health"] <= 0):
             endCombat("enemy")
+        elif(currentEnemy.health <= 0):
+            endCombat("player")        
         elif(key == "<r>"): #elif so you can't run if you're dead
             print("run")
             endCombat()
-        elif(currentEnemy.health <= 0):
-            endCombat("player")
     saveStats()
 
 def updateInventory():
@@ -206,14 +204,14 @@ def fight():
     global currentEnemy
     currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
     
-    app.setTabbedFrameSelectedTab("main","combat",False)
+    app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
     
-    app.setTabbedFrameDisabledTab("main","map", True)
+    app.setTabbedFrameDisabledTab("main","map", True) #disable all other tabs
     app.setTabbedFrameDisabledTab("main","inventory", True)
     app.setTabbedFrameDisabledTab("main","combat", False)  
     
-def endCombat(winner="none"):
-    app.setTabbedFrameSelectedTab("main","map",False)
+def endCombat(winner="none"):#default value of no winner
+    app.setTabbedFrameSelectedTab("main","map",False) #go back to normal tabs
     
     app.setTabbedFrameDisabledTab("main","map", False)
     app.setTabbedFrameDisabledTab("main","inventory", False)    
