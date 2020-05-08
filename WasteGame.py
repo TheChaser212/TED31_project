@@ -44,6 +44,7 @@ class Enemy(object):
 """
 variables
 """
+#biome info
 plains = {"name":"plains","color":"green","icon":"-"}
 mountain = {"name":"mountain","color":"grey","icon":"▲"}
 desert = {"name":"desert","color":"yellow","icon":"⁕"}
@@ -52,12 +53,13 @@ ocean = {"name":"ocean","color":"blue","icon":"≈"}
 
 biomes = [plains,mountain,desert,forest,ocean]
 
-iconSize = 20
+iconSize = 20 #size of each tile on the map
 gameMap = []
-mapSize = 50
+mapSize = 50 #size of the map
 
-loadGame = False
+loadGame = False #load game or not
 
+#player stats
 player = {"color":"white",
           "icon":"X",
           "posX":mapSize/2,
@@ -68,29 +70,29 @@ player = {"color":"white",
           "inventory":[Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
                        Armor("Chestplate","A large hunk of metal",27,"Body")]}
 
-currentEnemy = Enemy("name",10,5,10,["attack1","attack2"])
+currentEnemy = Enemy("name",10,5,10,["attack1","attack2"]) #enemy that's being fought
 
 """
 functions
 """
-def saveMap():
+def saveMap(): #save map
     file = open("map.txt","wb")
     pickle.dump(gameMap, file)
     file.close()
     
-def saveStats():
+def saveStats(): #save player stats
     file = open("player.txt","wb")
     pickle.dump(player,file)
     file.close()    
 
-def generateMap():
+def generateMap(): #create new map
     for y in range(mapSize):
         gameMap.append([])
         for x in range(mapSize):
             gameMap[y].append(random.choice(biomes))
     saveMap()
 
-def load():
+def load(): #load player stats and map
     global gameMap
     global player
     try:
@@ -111,7 +113,7 @@ def load():
                   "posY":1,
                   "inventory":[]}
 
-def updateMap():
+def updateMap(): #reload map
     app.clearCanvas("map")
     a = 0
     for y in gameMap:
@@ -133,7 +135,8 @@ def onMove():
     map.xview_moveto((player["posX"]-5)/(mapSize+2))
     map.yview_moveto((player["posY"]-5)/(mapSize+2))
     
-    fight()#testing    
+    if(random.randint(1,4)==1):
+        startCombat()#testing    
 
 def keys(key):
     currentTab = app.getTabbedFrameSelectedTab("main")
@@ -169,18 +172,21 @@ def keys(key):
     elif(currentTab == "combat"):
         global currentEnemy
         
-        print("Player")
-        print("health:%i,damage:%i,armor:%i"%(player["health"],player["damage"],player["armor"]))        
-        
-        print("Enemy")
-        print("name:%s,health:%i,damage:%i,armor:%i"%(currentEnemy.name,currentEnemy.health,currentEnemy.damage,currentEnemy.armor))
-        
         if(key == "<a>"):
             print("attack")
             currentEnemy.health -= (player["damage"] - currentEnemy.armor)
         elif(key == "<b>"):
             print("block")
             player["health"] -= (currentEnemy.damage - player["armor"])
+        
+        #debugging
+        print("Player")
+        print("health:%i,damage:%i,armor:%i"%(player["health"],player["damage"],player["armor"]))        
+        
+        print("Enemy")
+        print("name:%s,health:%i,damage:%i,armor:%i"%(currentEnemy.name,currentEnemy.health,currentEnemy.damage,currentEnemy.armor))
+        
+        updateCombat() #update labels to show info
         
         if(player["health"] <= 0):
             endCombat("enemy")
@@ -200,7 +206,19 @@ def updateInventory():
         app.addLabel(i.name,i.name)
         app.setLabelTooltip(i.name, i.description())
 
-def fight():
+
+#combat functions
+def updateCombat():
+    app.setLabel("playerHealth","Health: %i"%player["health"])
+    app.setLabel("playerDamage","Damage: %i"%player["damage"])
+    app.setLabel("playerArmor","Armor: %i"%player["armor"])
+    
+    app.setLabel("enemyName","%s"%currentEnemy.name)
+    app.setLabel("enemyHealth","Health: %i"%currentEnemy.health)
+    app.setLabel("enemyDamage","Damage: %i"%currentEnemy.damage)
+    app.setLabel("enemyArmor","Armor: %i"%currentEnemy.armor)
+
+def startCombat():
     global currentEnemy
     currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
     
@@ -208,7 +226,9 @@ def fight():
     
     app.setTabbedFrameDisabledTab("main","map", True) #disable all other tabs
     app.setTabbedFrameDisabledTab("main","inventory", True)
-    app.setTabbedFrameDisabledTab("main","combat", False)  
+    app.setTabbedFrameDisabledTab("main","combat", False)
+    
+    updateCombat()
     
 def endCombat(winner="none"):#default value of no winner
     app.setTabbedFrameSelectedTab("main","map",False) #go back to normal tabs
@@ -236,19 +256,41 @@ app.addLabel("title", "Waste Adventure")
 app.startTabbedFrame("main")
 app.setTabbedFrameTabExpand("main", expand=True)
 app.setTabbedFrameChangeCommand("main", updateInventory)
+
+#map tab
 app.startTab("map")
 map = app.addCanvas("map")
 map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1) #x1, y1, x2, y2, height
 app.stopTab()
 
+#inventory tab
 app.startTab("inventory")
 app.addLabel("inv","inventory")
 app.stopTab()
 
+#combat tab
 app.startTab("combat")
 app.addLabel("fight","combat")
+
+#player
+app.startFrame("player",row=0,column=0)
+app.addLabel("playerName","Player")
+app.addLabel("playerHealth","Health")
+app.addLabel("playerDamage","Damage")
+app.addLabel("playerArmor","Armor")
+app.stopFrame()
+
+#enemy
+app.startFrame("enemy",row=0,column=1)
+app.addLabel("enemyName","Name")
+app.addLabel("enemyHealth","Health")
+app.addLabel("enemyDamage","Damage")
+app.addLabel("enemyArmor","Armor")
+app.stopFrame()
+
 app.stopTab()
 app.stopTabbedFrame()
+
 
 if(loadGame):
     load()
