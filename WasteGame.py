@@ -32,8 +32,7 @@ class Armor(Item):
     def description(self):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
-
-class Enemy(object):
+class Mob(object):
     def __init__(self,name,health,damage,armor,attackTypes):
         self.name = name
         self.health = health
@@ -41,6 +40,15 @@ class Enemy(object):
         self.damage = damage
         self.armor = armor
         self.attackTypes = attackTypes
+
+class Player(Mob):
+    def __init__(self,name,health,damage,armor,attackTypes,posX,posY,icon,color,inventory):
+        super().__init__(name,health,damage,armor,attackTypes)
+        self.posX = posX
+        self.posY = posY
+        self.icon = icon
+        self.color = color
+        self.inventory = inventory
         
 """
 variables
@@ -61,6 +69,7 @@ mapSize = 50 #size of the map
 loadGame = False #load game or not
 
 #player stats
+"""
 player = {"color":"white",
           "icon":"X",
           "posX":mapSize/2,#middle of the map
@@ -72,8 +81,28 @@ player = {"color":"white",
           "attackTypes":["Slash","Stab"],
           "inventory":[Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
                        Armor("Chestplate","A large hunk of metal",27,"Body")]}
+"""
 
-currentEnemy = Enemy("name",10,5,10,["attack1","attack2"]) #enemy that's being fought
+player = Player("player",#name
+                10,#health
+                5,#damage
+                10,#armor
+                ["Slash","Stab"],#attack types
+                mapSize/2,#x position
+                mapSize/2,#y position
+                "X",#icon on map
+                "white",#color on map
+                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                Armor("Chestplate","A large hunk of metal",27,"Body")])
+                
+
+#enemy that's being fought
+currentEnemy = Mob("name",#name
+                   10,#health
+                   5,#damage
+                   10,#armor
+                   ["attack1","attack2"]#attack types
+                   )
 
 """
 functions
@@ -110,11 +139,17 @@ def load(): #load player stats and map
         player = pickle.load(file)
         file.close()
     except FileNotFoundError:
-        player = {"color":"white",
-                  "icon":"X",
-                  "posX":1,
-                  "posY":1,
-                  "inventory":[]}
+        player = Player("player",#name
+                10,#health
+                5,#damage
+                10,#armor
+                ["Slash","Stab"],#attack types
+                mapSize/2,#x position
+                mapSize/2,#y position
+                "X",#icon on map
+                "white",#color on map
+                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                Armor("Chestplate","A large hunk of metal",27,"Body")])
 
 def updateMap(): #reload map
     app.clearCanvas("map")
@@ -129,14 +164,14 @@ def updateMap(): #reload map
             map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize,fill=x["color"])
             map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2),text = x["icon"])
     
-    map.create_rectangle(player["posX"]*iconSize, player["posY"]*iconSize, player["posX"]*iconSize+iconSize, player["posY"]*iconSize+iconSize,fill=player["color"],tags="player") 
-    map.create_text((player["posX"]*iconSize)+(iconSize/2), (player["posY"]*iconSize)+(iconSize/2),text = player["icon"],tags="player")                
-    map.xview_moveto((player["posX"]-5)/(mapSize+2))
-    map.yview_moveto((player["posY"]-5)/(mapSize+2))    
+    map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
+    map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
+    map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
+    map.yview_moveto((player.posY-5)/(mapSize+2))  #show player position + 5 tiles up  
 
 def onMove():
-    map.xview_moveto((player["posX"]-5)/(mapSize+2))
-    map.yview_moveto((player["posY"]-5)/(mapSize+2))
+    map.xview_moveto((player.posX-5)/(mapSize+2))
+    map.yview_moveto((player.posY-5)/(mapSize+2))
     
     if(random.randint(1,4)==1):
         startCombat()#testing    
@@ -147,26 +182,26 @@ def keys(key):
     if(currentTab == "map"):
         playerObj = map.find_withtag("player")
         if(key == "<Left>"):
-            if(player["posX"] != 1):
-                player["posX"] -= 1
+            if(player.posX != 1):
+                player.posX -= 1
                 for p in playerObj:
                     map.move(p,-iconSize,0) #thing, x, y
                 onMove()
         elif(key == "<Right>"):
-            if(player["posX"] != mapSize):
-                player["posX"] += 1
+            if(player.posX != mapSize):
+                player.posX += 1
                 for p in playerObj:
                     map.move(p,iconSize,0)
                 onMove()
         elif(key == "<Up>"):
-            if(player["posY"] != 1):
-                player["posY"] -= 1  
+            if(player.posY != 1):
+                player.posY -= 1  
                 for p in playerObj:
                     map.move(p,0,-iconSize)
                 onMove()
         elif(key == "<Down>"):
-            if(player["posY"] != mapSize):
-                player["posY"] += 1
+            if(player.posY != mapSize):
+                player.posY += 1
                 for p in playerObj:
                     map.move(p,0,iconSize)
                 onMove()
@@ -176,31 +211,32 @@ def keys(key):
         global currentEnemy
         
         if(key == "<a>"):
-            print("attack")
-            damage = (player["damage"] - currentEnemy.armor)
+            #print("attack")
+            damage = (player.damage - currentEnemy.armor)
             currentEnemy.health -= damage
-            app.setLabel("log","You %s at the %s, doing %i damage"%(random.choice(player["attackTypes"]),currentEnemy.name,damage))
+            app.setLabel("log","You %s at the %s, doing %i damage"%(random.choice(player.attackTypes),currentEnemy.name,damage))
         elif(key == "<b>"):
-            print("block")
-            damage = (currentEnemy.damage - player["armor"])
-            player["health"] -= damage
+            #print("block")
+            damage = (currentEnemy.damage - player.armor)
+            player.health -= damage
             app.setLabel("log","The %s %ses at you, doing %i damage"%(currentEnemy.name,random.choice(currentEnemy.attackTypes),damage))
         
         #debugging
+        """
         print("Player")
-        print("health:%i,damage:%i,armor:%i"%(player["health"],player["damage"],player["armor"]))        
+        print("health:%i,damage:%i,armor:%i"%(player.health,player.damage,player.armor))        
         
         print("Enemy")
         print("name:%s,health:%i,damage:%i,armor:%i"%(currentEnemy.name,currentEnemy.health,currentEnemy.damage,currentEnemy.armor))
-        
+        """
         updateCombat() #update labels to show info
         
-        if(player["health"] <= 0):
+        if(player.health <= 0):
             endCombat("enemy")
         elif(currentEnemy.health <= 0):
             endCombat("player")        
         elif(key == "<r>"): #elif so you can't run if you're dead
-            print("run")
+            #print("run")
             endCombat()
     saveStats()
 
@@ -209,17 +245,17 @@ def updateInventory():
         return
     app.openTab("main","inventory")
     app.emptyCurrentContainer()
-    for i in player["inventory"]:
+    for i in player.inventory:
         app.addLabel(i.name,i.name)
         app.setLabelTooltip(i.name, i.description())
 
 
 #combat functions
 def updateCombat():
-    #app.setLabel("playerHealth","Health: %i"%player["health"])
-    app.setMeter("playerHealth",100*player["health"]/player["maxHealth"],text=player["health"])
-    app.setLabel("playerDamage","Damage: %i"%player["damage"])
-    app.setLabel("playerArmor","Armor: %i"%player["armor"])
+    #app.setLabel("playerHealth","Health: %i"%player.health)
+    app.setMeter("playerHealth",100*player.health/player.maxHealth,text=player.health)
+    app.setLabel("playerDamage","Damage: %i"%player.damage)
+    app.setLabel("playerArmor","Armor: %i"%player.armor)
     
     app.setLabel("enemyName","%s"%currentEnemy.name)
     app.setMeter("enemyHealth",100*currentEnemy.health/currentEnemy.maxHealth,text=currentEnemy.health)
@@ -229,8 +265,8 @@ def updateCombat():
 
 def startCombat():
     global currentEnemy
-    currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
-    player["health"] = player["maxHealth"]
+    currentEnemy = Mob("name",10,10,2,["attack1","attack2"])
+    player.health = player.maxHealth
     
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
     
@@ -250,7 +286,7 @@ def endCombat(winner="none"):#default value of no winner
         print("you died")
     elif(winner == "player"):
         print("you win")
-        player["maxHealth"] += 1
+        player.maxHealth += 1
     elif(winner == "none"):
         print("you're a coward")
 
