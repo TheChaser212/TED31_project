@@ -40,8 +40,11 @@ class Mob(object):
         self.damage = damage
         self.armor = armor
         self.attackTypes = attackTypes
+    
+    def attackDesc(self,other,damage):
+        return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage)
 
-class Player(Mob):
+class Player(Mob): #subclass of Mob
     def __init__(self,name,health,damage,armor,attackTypes,posX,posY,icon,color,inventory):
         super().__init__(name,health,damage,armor,attackTypes)
         self.posX = posX
@@ -69,39 +72,25 @@ mapSize = 50 #size of the map
 loadGame = False #load game or not
 
 #player stats
-"""
-player = {"color":"white",
-          "icon":"X",
-          "posX":mapSize/2,#middle of the map
-          "posY":mapSize/2,#middle of the map
-          "health":20,
-          "maxHealth":20,
-          "damage":10,
-          "armor":5,
-          "attackTypes":["Slash","Stab"],
-          "inventory":[Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
-                       Armor("Chestplate","A large hunk of metal",27,"Body")]}
-"""
-
 player = Player("player",#name
                 10,#health
                 5,#damage
                 10,#armor
-                ["Slash","Stab"],#attack types
+                ["slashes","stabs"],#attack types
                 mapSize/2,#x position
                 mapSize/2,#y position
                 "X",#icon on map
                 "white",#color on map
-                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
+                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),#inventory
                 Armor("Chestplate","A large hunk of metal",27,"Body")])
                 
 
 #enemy that's being fought
-currentEnemy = Mob("name",#name
+currentEnemy = Mob("enemy",#name
                    10,#health
                    5,#damage
                    10,#armor
-                   ["attack1","attack2"]#attack types
+                   ["jabs","claws"]#attack types
                    )
 
 """
@@ -212,14 +201,14 @@ def keys(key):
         
         if(key == "<a>"):
             #print("attack")
-            damage = (player.damage - currentEnemy.armor)
+            damage = min(player.damage - currentEnemy.armor,0)
             currentEnemy.health -= damage
-            app.setLabel("log","You %s at the %s, doing %i damage"%(random.choice(player.attackTypes),currentEnemy.name,damage))
+            app.setLabel("log",player.attackDesc(currentEnemy,damage))
         elif(key == "<b>"):
             #print("block")
-            damage = (currentEnemy.damage - player.armor)
+            damage = min(currentEnemy.damage - player.armor,0)
             player.health -= damage
-            app.setLabel("log","The %s %ses at you, doing %i damage"%(currentEnemy.name,random.choice(currentEnemy.attackTypes),damage))
+            app.setLabel("log",currentEnemy.attackDesc(player,damage))
         
         #debugging
         """
@@ -265,7 +254,7 @@ def updateCombat():
 
 def startCombat():
     global currentEnemy
-    currentEnemy = Mob("name",10,10,2,["attack1","attack2"])
+    currentEnemy = Mob("enemy",10,5,10,["jabs","claws"])
     player.health = player.maxHealth
     
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
