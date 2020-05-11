@@ -37,6 +37,7 @@ class Enemy(object):
     def __init__(self,name,health,damage,armor,attackTypes):
         self.name = name
         self.health = health
+        self.maxHealth = health
         self.damage = damage
         self.armor = armor
         self.attackTypes = attackTypes
@@ -53,7 +54,7 @@ ocean = {"name":"ocean","color":"blue","icon":"≈"}
 
 biomes = [plains,mountain,desert,forest,ocean]
 
-iconSize = 20 #size of each tile on the map
+iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
 mapSize = 50 #size of the map
 
@@ -62,11 +63,13 @@ loadGame = False #load game or not
 #player stats
 player = {"color":"white",
           "icon":"X",
-          "posX":mapSize/2,
-          "posY":mapSize/2,
+          "posX":mapSize/2,#middle of the map
+          "posY":mapSize/2,#middle of the map
           "health":20,
+          "maxHealth":20,
           "damage":10,
           "armor":5,
+          "attackTypes":["Slash","Stab"],
           "inventory":[Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
                        Armor("Chestplate","A large hunk of metal",27,"Body")]}
 
@@ -174,10 +177,14 @@ def keys(key):
         
         if(key == "<a>"):
             print("attack")
-            currentEnemy.health -= (player["damage"] - currentEnemy.armor)
+            damage = (player["damage"] - currentEnemy.armor)
+            currentEnemy.health -= damage
+            app.setLabel("log","You %s at the %s, doing %i damage"%(random.choice(player["attackTypes"]),currentEnemy.name,damage))
         elif(key == "<b>"):
             print("block")
-            player["health"] -= (currentEnemy.damage - player["armor"])
+            damage = (currentEnemy.damage - player["armor"])
+            player["health"] -= damage
+            app.setLabel("log","The %s %ses at you, doing %i damage"%(currentEnemy.name,random.choice(currentEnemy.attackTypes),damage))
         
         #debugging
         print("Player")
@@ -209,18 +216,21 @@ def updateInventory():
 
 #combat functions
 def updateCombat():
-    app.setLabel("playerHealth","Health: %i"%player["health"])
+    #app.setLabel("playerHealth","Health: %i"%player["health"])
+    app.setMeter("playerHealth",100*player["health"]/player["maxHealth"],text=player["health"])
     app.setLabel("playerDamage","Damage: %i"%player["damage"])
     app.setLabel("playerArmor","Armor: %i"%player["armor"])
     
     app.setLabel("enemyName","%s"%currentEnemy.name)
-    app.setLabel("enemyHealth","Health: %i"%currentEnemy.health)
+    app.setMeter("enemyHealth",100*currentEnemy.health/currentEnemy.maxHealth,text=currentEnemy.health)
+    #app.setLabel("enemyHealth","Health: %i"%currentEnemy.health)
     app.setLabel("enemyDamage","Damage: %i"%currentEnemy.damage)
     app.setLabel("enemyArmor","Armor: %i"%currentEnemy.armor)
 
 def startCombat():
     global currentEnemy
     currentEnemy = Enemy("name",10,10,2,["attack1","attack2"])
+    player["health"] = player["maxHealth"]
     
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
     
@@ -240,13 +250,13 @@ def endCombat(winner="none"):#default value of no winner
         print("you died")
     elif(winner == "player"):
         print("you win")
-        player["damage"] += 1
+        player["maxHealth"] += 1
     elif(winner == "none"):
         print("you're a coward")
+
 """
 setup and start gui
 """
-
 app = gui("Waste Adventure")
 app.setSticky("NEWS")
 app.setStretch("both")
@@ -275,18 +285,29 @@ app.addLabel("fight","combat")
 #player
 app.startFrame("player",row=0,column=0)
 app.addLabel("playerName","Player")
-app.addLabel("playerHealth","Health")
+
+app.addMeter("playerHealth",100)
+app.setMeterFill("playerHealth","Green")
+app.setMeterBg("playerHealth","Red")
+
 app.addLabel("playerDamage","Damage")
 app.addLabel("playerArmor","Armor")
 app.stopFrame()
 
+app.addVerticalSeparator(row=0,column=1)
+
 #enemy
-app.startFrame("enemy",row=0,column=1)
+app.startFrame("enemy",row=0,column=2)
 app.addLabel("enemyName","Name")
-app.addLabel("enemyHealth","Health")
+app.addMeter("enemyHealth",100)
+app.setMeterFill("enemyHealth","Green")
+app.setMeterBg("enemyHealth","Red")
+
 app.addLabel("enemyDamage","Damage")
 app.addLabel("enemyArmor","Armor")
 app.stopFrame()
+
+app.addLabel("log","did something",colspan=3)
 
 app.stopTab()
 app.stopTabbedFrame()
