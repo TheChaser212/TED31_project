@@ -88,16 +88,17 @@ player = Player("player",#name
                 mapSize/2,#x position
                 mapSize/2,#y position
                 [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),#inventory
-                Armor("Chestplate","A large hunk of metal",27,"Body")])
+                Armor("Chestplate","A large hunk of metal",27,"body")])
                 
 
 #enemy that's being fought
 currentEnemy = Mob("enemy",#name
                    10,#health
-                   5,#damage
+                   13,#damage
                    10,#armor
                    ["jabs","claws"]#attack types
                    )
+draggedItem = 0
 
 """
 functions
@@ -203,24 +204,14 @@ def keys(key):
     elif(currentTab == "combat"):
         global currentEnemy
         if(key == "a"):
-            #print("attack")
             damage = max(player.damage - currentEnemy.armor,0)
             currentEnemy.health -= damage
             app.setLabel("log",player.attackDesc(currentEnemy,damage))
         elif(key == "b"):
-            #print("block")
             damage = max(currentEnemy.damage - player.armor,0)
             player.health -= damage
             app.setLabel("log",currentEnemy.attackDesc(player,damage))
         
-        #debugging
-        """
-        print("Player")
-        print("health:%i,damage:%i,armor:%i"%(player.health,player.damage,player.armor))        
-        
-        print("Enemy")
-        print("name:%s,health:%i,damage:%i,armor:%i"%(currentEnemy.name,currentEnemy.health,currentEnemy.damage,currentEnemy.armor))
-        """
         updateCombat() #update labels to show info
         
         if(player.health <= 0):
@@ -228,7 +219,6 @@ def keys(key):
         elif(currentEnemy.health <= 0):
             endCombat("player")        
         elif(key == "r"): #elif so you can't run if you're dead
-            #print("run")
             endCombat()
     saveStats()
 
@@ -238,9 +228,10 @@ def updateInventory():
     app.openFrame("items")
     app.emptyCurrentContainer()
     for i in player.inventory:
-        app.addLabel(i.name,i.name)
-        app.setLabelTooltip(i.name, i.description())
-        app.setLabelRelief(i.name,"raised")
+        app.addLabel(i,i.name)
+        app.setLabelTooltip(i, i.description())
+        app.setLabelRelief(i,"raised")
+        app.setLabelDragFunction(i, [itemDrag, itemDrop])
     
     for slot in player.equipped:
         item = player.equipped[slot]
@@ -250,24 +241,33 @@ def updateInventory():
         except:#if no item equipped in slot
             app.setLabel(slot,"Nothing")
 
+def itemDrag(widget):
+    global draggedItem
+    draggedItem = widget
+    print("Dragged from:", widget)
 
+def itemDrop(widget):
+    print("Dropped on:", widget)
+    print(draggedItem.slot)
+    if(widget == draggedItem.slot):
+        player.equip(draggedItem)
+        updateInventory()
+    
 #combat functions
 def updateCombat():
-    #app.setLabel("playerHealth","Health: %i"%player.health)
     app.setMeter("playerHealth",100*player.health/player.maxHealth,text=player.health)
     app.setLabel("playerDamage","Damage: %i"%player.damage)
     app.setLabel("playerArmor","Armor: %i"%player.armor)
     
     app.setLabel("enemyName","%s"%currentEnemy.name)
     app.setMeter("enemyHealth",100*currentEnemy.health/currentEnemy.maxHealth,text=currentEnemy.health)
-    #app.setLabel("enemyHealth","Health: %i"%currentEnemy.health)
     app.setLabel("enemyDamage","Damage: %i"%currentEnemy.damage)
     app.setLabel("enemyArmor","Armor: %i"%currentEnemy.armor)
 
 def startCombat():
     global currentEnemy
-    currentEnemy = Mob("enemy",10,5,10,["jabs","claws"])
-    player.health = player.maxHealth
+    currentEnemy = Mob("enemy",10,13,10,["jabs","claws"])
+    player.health = player.maxHealth #change at some point
     
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
     
@@ -313,14 +313,19 @@ app.stopTab()
 #inventory tab
 app.startTab("inventory")
 app.startFrame("items",row=0,column=0)
+app.addEmptyLabel("empty")
 app.stopFrame()
 
 app.addVerticalSeparator(row=0,column=1)
 
 app.startFrame("equipped",row=0,column=2)
+itemRow = 0
 for slot in player.equipped:
-    app.addLabel(slot,player.equipped[slot])
+    app.addLabel("%s title"%slot,slot,row=itemRow,column=2)
+    app.addLabel(slot,player.equipped[slot],row=itemRow,column=3)
     app.setLabelRelief(slot,"ridge")
+    
+    itemRow += 1
 app.stopFrame()
 app.stopTab()
 
@@ -353,11 +358,12 @@ app.addLabel("enemyDamage","Damage")
 app.addLabel("enemyArmor","Armor")
 app.stopFrame()
 
-app.addLabel("log","did something",colspan=3)
-
 app.stopTab()
 app.stopTabbedFrame()
 
+app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
+
+app.addLabel("log","did something",colspan=3)
 
 if(loadGame):
     load()
