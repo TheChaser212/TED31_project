@@ -19,6 +19,7 @@ class Weapon(Item): #subclass of item
         super().__init__(name,desc) #calls init of item class
         self.damage = damage
         self.attackTypes = attackTypes
+        self.slot = "weapon"
     
     def description(self):
         return "%s, it does %i damage"%(super().description(),self.damage)
@@ -45,13 +46,20 @@ class Mob(object):
         return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage)
 
 class Player(Mob): #subclass of Mob
-    def __init__(self,name,health,damage,armor,attackTypes,posX,posY,icon,color,inventory):
+    def __init__(self,name,health,damage,armor,attackTypes,posX,posY,inventory):
         super().__init__(name,health,damage,armor,attackTypes)
         self.posX = posX
         self.posY = posY
-        self.icon = icon
-        self.color = color
+        self.icon = "X"
+        self.color = "white"
         self.inventory = inventory
+        self.equipped = {"weapon":Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),"head":"none","body":"none","legs":"none"}
+        
+    def equip(self,item):
+        try:
+            self.equipped[item.slot] = item
+        except:
+            print("no slot")
         
 """
 variables
@@ -74,13 +82,11 @@ loadGame = False #load game or not
 #player stats
 player = Player("player",#name
                 10,#health
-                5,#damage
+                11,#damage
                 10,#armor
                 ["slashes","stabs"],#attack types
                 mapSize/2,#x position
                 mapSize/2,#y position
-                "X",#icon on map
-                "white",#color on map
                 [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),#inventory
                 Armor("Chestplate","A large hunk of metal",27,"Body")])
                 
@@ -135,8 +141,6 @@ def load(): #load player stats and map
                 ["Slash","Stab"],#attack types
                 mapSize/2,#x position
                 mapSize/2,#y position
-                "X",#icon on map
-                "white",#color on map
                 [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
                 Armor("Chestplate","A large hunk of metal",27,"Body")])
 
@@ -170,25 +174,25 @@ def keys(key):
     
     if(currentTab == "map"):
         playerObj = map.find_withtag("player")
-        if(key == "<Left>"):
+        if(key == "Left"):
             if(player.posX != 1):
                 player.posX -= 1
                 for p in playerObj:
                     map.move(p,-iconSize,0) #thing, x, y
                 onMove()
-        elif(key == "<Right>"):
+        elif(key == "Right"):
             if(player.posX != mapSize):
                 player.posX += 1
                 for p in playerObj:
                     map.move(p,iconSize,0)
                 onMove()
-        elif(key == "<Up>"):
+        elif(key == "Up"):
             if(player.posY != 1):
                 player.posY -= 1  
                 for p in playerObj:
                     map.move(p,0,-iconSize)
                 onMove()
-        elif(key == "<Down>"):
+        elif(key == "Down"):
             if(player.posY != mapSize):
                 player.posY += 1
                 for p in playerObj:
@@ -198,15 +202,14 @@ def keys(key):
         
     elif(currentTab == "combat"):
         global currentEnemy
-        
-        if(key == "<a>"):
+        if(key == "a"):
             #print("attack")
-            damage = min(player.damage - currentEnemy.armor,0)
+            damage = max(player.damage - currentEnemy.armor,0)
             currentEnemy.health -= damage
             app.setLabel("log",player.attackDesc(currentEnemy,damage))
-        elif(key == "<b>"):
+        elif(key == "b"):
             #print("block")
-            damage = min(currentEnemy.damage - player.armor,0)
+            damage = max(currentEnemy.damage - player.armor,0)
             player.health -= damage
             app.setLabel("log",currentEnemy.attackDesc(player,damage))
         
@@ -224,7 +227,7 @@ def keys(key):
             endCombat("enemy")
         elif(currentEnemy.health <= 0):
             endCombat("player")        
-        elif(key == "<r>"): #elif so you can't run if you're dead
+        elif(key == "r"): #elif so you can't run if you're dead
             #print("run")
             endCombat()
     saveStats()
@@ -232,11 +235,20 @@ def keys(key):
 def updateInventory():
     if(app.getTabbedFrameSelectedTab("main") != "inventory"):
         return
-    app.openTab("main","inventory")
+    app.openFrame("items")
     app.emptyCurrentContainer()
     for i in player.inventory:
         app.addLabel(i.name,i.name)
         app.setLabelTooltip(i.name, i.description())
+        app.setLabelRelief(i.name,"raised")
+    
+    for slot in player.equipped:
+        item = player.equipped[slot]
+        try:
+            app.setLabel(slot,item.name)
+            app.setLabelTooltip(slot, item.description())
+        except:#if no item equipped in slot
+            app.setLabel(slot,"Nothing")
 
 
 #combat functions
@@ -300,7 +312,16 @@ app.stopTab()
 
 #inventory tab
 app.startTab("inventory")
-app.addLabel("inv","inventory")
+app.startFrame("items",row=0,column=0)
+app.stopFrame()
+
+app.addVerticalSeparator(row=0,column=1)
+
+app.startFrame("equipped",row=0,column=2)
+for slot in player.equipped:
+    app.addLabel(slot,player.equipped[slot])
+    app.setLabelRelief(slot,"ridge")
+app.stopFrame()
 app.stopTab()
 
 #combat tab
@@ -344,5 +365,5 @@ else:
     generateMap()
 updateMap()
 
-app.bindKeys(["<Left>","<Right>","<Up>","<Down>","<a>","<b>","<r>"], keys)
+app.bindKeys(["Left","Right","Up","Down","a","b","r"], keys)
 app.go()
