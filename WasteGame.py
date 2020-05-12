@@ -22,7 +22,7 @@ class Weapon(Item): #subclass of item
         self.slot = "weapon"
     
     def description(self):
-        return "%s, it does %i damage"%(super().description(),self.damage)
+        return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage)
 
 class Armor(Item):
     def __init__(self,name,desc,armor,slot):
@@ -53,13 +53,22 @@ class Player(Mob): #subclass of Mob
         self.icon = "X"
         self.color = "white"
         self.inventory = inventory
-        self.equipped = {"weapon":Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),"head":"none","body":"none","legs":"none"}
+        self.equipped = {"weapon":None,"head":None,"body":None,"legs":None}
         
     def equip(self,item):
         try:
             self.equipped[item.slot] = item
+            app.setLabel("output","Equipped %s"%item.name.lower())
         except:
-            print("no slot")
+            app.setLabel("output","That doesn't go there!")
+            
+    def unEquip(self,slot):
+        item = self.equipped[slot]
+        if(self.equipped[slot] != None):
+            app.setLabel("output","Unequipped %s"%item.name.lower())
+            self.equipped[slot] = None
+        updateInventory()
+        
         
 """
 variables
@@ -206,11 +215,11 @@ def keys(key):
         if(key == "a"):
             damage = max(player.damage - currentEnemy.armor,0)
             currentEnemy.health -= damage
-            app.setLabel("log",player.attackDesc(currentEnemy,damage))
+            app.setLabel("output",player.attackDesc(currentEnemy,damage))
         elif(key == "b"):
             damage = max(currentEnemy.damage - player.armor,0)
             player.health -= damage
-            app.setLabel("log",currentEnemy.attackDesc(player,damage))
+            app.setLabel("output",currentEnemy.attackDesc(player,damage))
         
         updateCombat() #update labels to show info
         
@@ -238,8 +247,10 @@ def updateInventory():
         try:
             app.setLabel(slot,item.name)
             app.setLabelTooltip(slot, item.description())
+            
         except:#if no item equipped in slot
             app.setLabel(slot,"Nothing")
+            app.setLabelTooltip(slot, "")
 
 def itemDrag(widget):
     global draggedItem
@@ -252,7 +263,7 @@ def itemDrop(widget):
     if(widget == draggedItem.slot):
         player.equip(draggedItem)
         updateInventory()
-    
+
 #combat functions
 def updateCombat():
     app.setMeter("playerHealth",100*player.health/player.maxHealth,text=player.health)
@@ -284,12 +295,12 @@ def endCombat(winner="none"):#default value of no winner
     app.setTabbedFrameDisabledTab("main","inventory", False)    
     app.setTabbedFrameDisabledTab("main","combat", True)  
     if(winner == "enemy"):
-        print("you died")
+        app.setLabel("output","You died")
     elif(winner == "player"):
-        print("you win")
+        app.setLabel("output","You win")
         player.maxHealth += 1
     elif(winner == "none"):
-        print("you're a coward")
+        app.setLabel("output","You're a coward")
 
 """
 setup and start gui
@@ -321,9 +332,11 @@ app.addVerticalSeparator(row=0,column=1)
 app.startFrame("equipped",row=0,column=2)
 itemRow = 0
 for slot in player.equipped:
-    app.addLabel("%s title"%slot,slot,row=itemRow,column=2)
+    app.addLabel("%s title"%slot,slot.capitalize(),row=itemRow,column=2)
     app.addLabel(slot,player.equipped[slot],row=itemRow,column=3)
     app.setLabelRelief(slot,"ridge")
+    app.setLabelTooltip(slot, player.equipped[slot])
+    app.setLabelSubmitFunction(slot, player.unEquip)
     
     itemRow += 1
 app.stopFrame()
@@ -363,7 +376,7 @@ app.stopTabbedFrame()
 
 app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
-app.addLabel("log","did something",colspan=3)
+app.addLabel("output","did something",colspan=3)
 
 if(loadGame):
     load()
