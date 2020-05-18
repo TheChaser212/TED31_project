@@ -55,10 +55,26 @@ class Player(Mob): #subclass of Mob
         self.inventory = inventory
         self.equipped = {"weapon":None,"head":None,"body":None,"legs":None}
         
+    def updateStats(self):
+        self.damage = 0
+        self.armor = 0
+        for item in self.equipped:
+            try:
+                self.damage += self.equipped[item].damage
+            except:
+                pass
+            try:
+                self.armor += self.equipped[item].armor
+            except:
+                pass
+            print(self.damage)
+            print(self.armor)
+    
     def equip(self,item):
         try:
             self.equipped[item.slot] = item
             app.setLabel("output","Equipped %s"%item.name.lower())
+            self.updateStats()
         except:
             app.setLabel("output","That doesn't go there!")
             
@@ -67,6 +83,7 @@ class Player(Mob): #subclass of Mob
         if(self.equipped[slot] != None):
             app.setLabel("output","Unequipped %s"%item.name.lower())
             self.equipped[slot] = None
+            self.updateStats()
         updateInventory()
         
         
