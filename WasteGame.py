@@ -67,8 +67,6 @@ class Player(Mob): #subclass of Mob
                 self.armor += self.equipped[item].armor
             except:
                 pass
-            print(self.damage)
-            print(self.armor)
     
     def equip(self,item):
         try:
@@ -76,7 +74,8 @@ class Player(Mob): #subclass of Mob
             app.setLabel("output","Equipped %s"%item.name.lower())
             self.updateStats()
         except:
-            app.setLabel("output","That doesn't go there!")
+            app.setLabel("output","You can't equip that!")
+        updateInventory()
             
     def unEquip(self,slot):
         item = self.equipped[slot]
@@ -114,7 +113,8 @@ player = Player("player",#name
                 mapSize/2,#x position
                 mapSize/2,#y position
                 [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),#inventory
-                Armor("Chestplate","A large hunk of metal",27,"body")])
+                Armor("Chestplate","A large hunk of metal",27,"body"),
+                Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
                 
 
 #enemy that's being fought
@@ -124,7 +124,7 @@ currentEnemy = Mob("enemy",#name
                    10,#armor
                    ["jabs","claws"]#attack types
                    )
-draggedItem = 0
+draggedItem = 0 #currently dragged widget
 
 """
 functions
@@ -181,8 +181,8 @@ def updateMap(): #reload map
             b+=1
             name = str(a)+" "+str(b)
                    
-            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize,fill=x["color"])
-            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2),text = x["icon"])
+            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x["color"]) #x1, y1, x2, y2, color
+            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text=x["icon"])
     
     map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
@@ -272,14 +272,14 @@ def updateInventory():
 def itemDrag(widget):
     global draggedItem
     draggedItem = widget
-    print("Dragged from:", widget)
+    #print("Dragged from:", widget)
+    app.raiseFrame("equipped")
 
 def itemDrop(widget):
-    print("Dropped on:", widget)
-    print(draggedItem.slot)
-    if(widget == draggedItem.slot):
-        player.equip(draggedItem)
-        updateInventory()
+    #print("Dropped on:", widget)
+    #print(draggedItem.slot)
+    #if(widget == draggedItem.slot):
+    player.equip(draggedItem)
 
 #combat functions
 def updateCombat():
