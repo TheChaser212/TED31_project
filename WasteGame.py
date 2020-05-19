@@ -323,22 +323,26 @@ def endCombat(winner="none"):#default value of no winner
 setup and start gui
 """
 app = gui("Waste Adventure")
-app.setSticky("NEWS")
-app.setStretch("both")
 
+app.setStretch('column')
+app.setSticky('esw')
 app.addLabel("title", "Waste Adventure")
 
+app.setSticky("NEWS")
+app.setStretch("both")
 app.startTabbedFrame("main")
 app.setTabbedFrameTabExpand("main", expand=True)
 app.setTabbedFrameChangeCommand("main", updateInventory)
 
 #map tab
+
 app.startTab("map")
 map = app.addCanvas("map")
-map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize),height=(iconSize*11)+1) #x1, y1, x2, y2, height
+map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize)) #x1, y1, x2, y2, height,height=(iconSize*11)+1
 app.stopTab()
 
 #inventory tab
+
 app.startTab("inventory")
 app.startFrame("items",row=0,column=0)
 app.addEmptyLabel("empty")
@@ -393,6 +397,8 @@ app.stopTabbedFrame()
 
 app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
+app.setStretch('column')
+app.setSticky('ew')
 app.addLabel("output","did something",colspan=3)
 
 if(loadGame):
