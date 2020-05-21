@@ -90,45 +90,7 @@ class Biome:
         self.name = name
         self.color = color
         self.icon = icon
-"""
-variables
-"""
-#biome info
-plains = Biome("plains","green","-")
-mountain = Biome("mountain","grey","▲")
-desert = Biome("desert","yellow","⁕")
-forest = Biome("forest","green","⇑")
-ocean = Biome("ocean","blue","≈")
 
-biomes = [plains,mountain,desert,forest,ocean]
-
-iconSize = 20 #size of each tile on the map in pixels
-gameMap = []
-mapSize = 50 #size of the map
-
-loadGame = False #load game or not
-
-#player stats
-player = Player("player",#name
-                10,#health
-                11,#damage
-                10,#armor
-                ["slashes","stabs"],#attack types
-                mapSize/2,#x position
-                mapSize/2,#y position
-                [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),#inventory
-                Armor("Chestplate","A large hunk of metal",27,"body"),
-                Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
-                
-
-#enemy that's being fought
-currentEnemy = Mob("enemy",#name
-                   10,#health
-                   13,#damage
-                   10,#armor
-                   ["jabs","claws"]#attack types
-                   )
-draggedItem = 0 #currently dragged widget
 
 """
 functions
@@ -333,6 +295,48 @@ def endCombat(winner="none"):#default value of no winner
         player.maxHealth += 1
     elif(winner == "none"):
         output("You're a no namer dog")
+
+
+"""
+variables
+"""
+#biome info
+plains = Biome("plains","green","-")
+mountain = Biome("mountain","grey","▲")
+desert = Biome("desert","yellow","⁕")
+forest = Biome("forest","green","⇑")
+ocean = Biome("ocean","blue","≈")
+
+biomes = [plains,mountain,desert,forest,ocean]
+
+iconSize = 20 #size of each tile on the map in pixels
+gameMap = []
+mapSize = 50 #size of the map
+
+loadGame = False #load game or not
+
+#player stats
+player = Player("player",#name
+                10,#health
+                11,#damage
+                10,#armor
+                ["slashes","stabs"],#attack types
+                mapSize/2,#x position
+                mapSize/2,#y position
+                [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),#inventory
+                Armor("Chestplate","A large hunk of metal",27,"body"),
+                Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
+                
+
+#enemy that's being fought
+currentEnemy = Mob("enemy",#name
+                   10,#health
+                   13,#damage
+                   10,#armor
+                   ["jabs","claws"]#attack types
+                   )
+draggedItem = 0 #currently dragged widget
+
 
 """
 setup and start gui
