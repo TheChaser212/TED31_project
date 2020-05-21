@@ -71,16 +71,16 @@ class Player(Mob): #subclass of Mob
     def equip(self,item):
         try:
             self.equipped[item.slot] = item
-            app.setLabel("output","Equipped %s"%item.name.lower())
+            output("Equipped %s"%item.name.lower())
             self.updateStats()
         except:
-            app.setLabel("output","You can't equip that!")
+            output("You can't equip that!")
         updateInventory()
             
     def unEquip(self,slot):
         item = self.equipped[slot]
         if(self.equipped[slot] != None):
-            app.setLabel("output","Unequipped %s"%item.name.lower())
+            output("Unequipped %s"%item.name.lower())
             self.equipped[slot] = None
             self.updateStats()
         updateInventory()
@@ -94,13 +94,6 @@ class Biome:
 variables
 """
 #biome info
-"""
-plains = {"name":"plains","color":"green","icon":"-"}
-mountain = {"name":"mountain","color":"grey","icon":"▲"}
-desert = {"name":"desert","color":"yellow","icon":"⁕"}
-forest = {"name":"forest","color":"green","icon":"⇑"}
-ocean = {"name":"ocean","color":"blue","icon":"≈"}
-"""
 plains = Biome("plains","green","-")
 mountain = Biome("mountain","grey","▲")
 desert = Biome("desert","yellow","⁕")
@@ -123,7 +116,7 @@ player = Player("player",#name
                 ["slashes","stabs"],#attack types
                 mapSize/2,#x position
                 mapSize/2,#y position
-                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),#inventory
+                [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),#inventory
                 Armor("Chestplate","A large hunk of metal",27,"body"),
                 Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
                 
@@ -140,6 +133,9 @@ draggedItem = 0 #currently dragged widget
 """
 functions
 """
+def output(text):
+    app.setLabel("output",text)
+
 def saveMap(): #save map
     file = open("map.txt","wb")
     pickle.dump(gameMap, file)
@@ -149,6 +145,11 @@ def saveStats(): #save player stats
     file = open("player.txt","wb")
     pickle.dump(player,file)
     file.close()    
+
+def saveAll():
+    output("Game saved")
+    saveMap()
+    saveStats()
 
 def generateMap(): #create new map
     for y in range(mapSize):
@@ -181,6 +182,9 @@ def load(): #load player stats and map
                 mapSize/2,#y position
                 [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
                 Armor("Chestplate","A large hunk of metal",27,"Body")])
+    
+    output("Game loaded")
+    updateMap() #do it at end because player pos might be different
 
 def updateMap(): #reload map
     app.clearCanvas("map")
@@ -216,7 +220,7 @@ def keys(key):
             if(player.posX != 1):
                 player.posX -= 1
                 for p in playerObj:
-                    map.move(p,-iconSize,0) #thing, x, y
+                    map.move(p,-iconSize,0) #move object x, y
                 onMove()
         elif(key == "Right"):
             if(player.posX != mapSize):
@@ -243,11 +247,11 @@ def keys(key):
         if(key == "a"):
             damage = max(player.damage - currentEnemy.armor,0)
             currentEnemy.health -= damage
-            app.setLabel("output",player.attackDesc(currentEnemy,damage))
+            output(player.attackDesc(currentEnemy,damage))
         elif(key == "b"):
             damage = max(currentEnemy.damage - player.armor,0)
             player.health -= damage
-            app.setLabel("output",currentEnemy.attackDesc(player,damage))
+            output(currentEnemy.attackDesc(player,damage))
         
         updateCombat() #update labels to show info
         
@@ -323,21 +327,27 @@ def endCombat(winner="none"):#default value of no winner
     app.setTabbedFrameDisabledTab("main","inventory", False)    
     app.setTabbedFrameDisabledTab("main","combat", True)  
     if(winner == "enemy"):
-        app.setLabel("output","You died")
+        output("You died")
     elif(winner == "player"):
-        app.setLabel("output","You win")
+        output("You win")
         player.maxHealth += 1
     elif(winner == "none"):
-        app.setLabel("output","You're a no namer dog")
+        output("You're a no namer dog")
 
 """
 setup and start gui
 """
 app = gui("Waste Adventure")
 
+app.createMenu("File")
+app.addMenuItem("File", "Save", func=saveAll)
+app.addMenuItem("File", "Load", func=load)
+
+
 app.setStretch('column')
 app.setSticky('esw')
 app.addLabel("title", "Waste Adventure")
+
 
 app.setSticky("NEWS")
 app.setStretch("both")
@@ -346,14 +356,12 @@ app.setTabbedFrameTabExpand("main", expand=True)
 app.setTabbedFrameChangeCommand("main", updateInventory)
 
 #map tab
-
 app.startTab("map")
 map = app.addCanvas("map")
 map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize)) #x1, y1, x2, y2, height,height=(iconSize*11)+1
 app.stopTab()
 
 #inventory tab
-
 app.startTab("inventory")
 app.startFrame("items",row=0,column=0)
 app.addEmptyLabel("empty")
@@ -406,13 +414,16 @@ app.stopFrame()
 app.stopTab()
 app.stopTabbedFrame()
 
+
 app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
+
+#output
 app.setStretch('column')
 app.setSticky('ew')
 app.addLabel("output","did something",colspan=3)
 
-if(loadGame):
+if(loadGame):#load by default or not
     load()
 else:
     generateMap()
