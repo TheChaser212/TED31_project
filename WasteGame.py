@@ -6,7 +6,7 @@ import pickle
 """
 Define classes
 """
-class Item(object):
+class Item:
     def __init__(self,name,desc):
         self.name = name
         self.desc = desc
@@ -33,7 +33,7 @@ class Armor(Item):
     def description(self):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
 
-class Mob(object):
+class Mob:
     def __init__(self,name,health,damage,armor,attackTypes):
         self.name = name
         self.health = health
@@ -85,16 +85,27 @@ class Player(Mob): #subclass of Mob
             self.updateStats()
         updateInventory()
         
-        
+class Biome:
+    def __init__(self,name,color,icon):
+        self.name = name
+        self.color = color
+        self.icon = icon
 """
 variables
 """
 #biome info
+"""
 plains = {"name":"plains","color":"green","icon":"-"}
 mountain = {"name":"mountain","color":"grey","icon":"▲"}
 desert = {"name":"desert","color":"yellow","icon":"⁕"}
 forest = {"name":"forest","color":"green","icon":"⇑"}
 ocean = {"name":"ocean","color":"blue","icon":"≈"}
+"""
+plains = Biome("plains","green","-")
+mountain = Biome("mountain","grey","▲")
+desert = Biome("desert","yellow","⁕")
+forest = Biome("forest","green","⇑")
+ocean = Biome("ocean","blue","≈")
 
 biomes = [plains,mountain,desert,forest,ocean]
 
@@ -181,8 +192,8 @@ def updateMap(): #reload map
             b+=1
             name = str(a)+" "+str(b)
                    
-            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x["color"]) #x1, y1, x2, y2, color
-            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text=x["icon"])
+            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color) #x1, y1, x2, y2, color
+            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
     
     map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
@@ -317,7 +328,7 @@ def endCombat(winner="none"):#default value of no winner
         app.setLabel("output","You win")
         player.maxHealth += 1
     elif(winner == "none"):
-        app.setLabel("output","You're a coward")
+        app.setLabel("output","You're a no namer dog")
 
 """
 setup and start gui
