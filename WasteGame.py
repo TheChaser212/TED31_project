@@ -22,16 +22,16 @@ class Weapon(Item): #subclass of item
         self.slot = "weapon"
     
     def description(self):
-        return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage)
+        return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage) #Item() description + extra info
 
-class Armor(Item):
+class Armor(Item): #subclass of item
     def __init__(self,name,desc,armor,slot):
         super().__init__(name,desc) #calls init of item class
         self.armor = armor
         self.slot = slot
     
     def description(self):
-        return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower())
+        return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower()) #Item() description + extra info
 
 class Mob:
     def __init__(self,name,health,damage,armor,attackTypes):
@@ -414,6 +414,14 @@ app.setMeterBg("enemyHealth","Red")
 app.addLabel("enemyDamage","Damage")
 app.addLabel("enemyArmor","Armor")
 app.stopFrame()
+
+app.stopTab()
+
+app.startTab("help")
+
+app.addLabel("helpLabel","""Use the arrow keys to move around the map.
+Click or drag items you want to equip.
+When in combat use A to attack, B to block and R to run.""")
 
 app.stopTab()
 app.stopTabbedFrame()
