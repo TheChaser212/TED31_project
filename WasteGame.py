@@ -86,10 +86,11 @@ class Player(Mob): #subclass of Mob
         updateInventory()
         
 class Biome:
-    def __init__(self,name,color,icon):
+    def __init__(self,name,color,icon,enemies):
         self.name = name
         self.color = color
         self.icon = icon
+        self.enemies = enemies
 
 
 """
@@ -205,24 +206,34 @@ def keys(key):
         
         
     elif(currentTab == "combat"):
-        global currentEnemy
-        if(key == "a"):
-            damage = max(player.damage - currentEnemy.armor,0)
-            currentEnemy.health -= damage
-            output(player.attackDesc(currentEnemy,damage))
-        elif(key == "b"):
-            damage = max(currentEnemy.damage - player.armor,0)
-            player.health -= damage
-            output(currentEnemy.attackDesc(player,damage))
-        
-        updateCombat() #update labels to show info
-        
-        if(player.health <= 0):
-            endCombat("enemy")
-        elif(currentEnemy.health <= 0):
-            endCombat("player")        
-        elif(key == "r"): #elif so you can't run if you're dead
-            endCombat()
+        if(key in ["a","b","r"]):
+            global currentEnemy
+            enemyAttacks = (random.random() > 0.5)
+            if(key == "a"):
+                damage = max(player.damage - currentEnemy.armor,0)
+                currentEnemy.health -= damage
+                output(player.attackDesc(currentEnemy,damage))
+                if(enemyAttacks):
+                    damage = max(currentEnemy.damage - player.armor,0)
+                    player.health -= damage
+                    output(currentEnemy.attackDesc(player,damage))                    
+            elif(key == "b"):
+                output("You block the %'s attack!"%currentEnemy.name)
+            elif(key == "r"):
+                if(enemyAttacks):
+                    damage = max(currentEnemy.damage - player.armor,0)
+                    player.health -= damage
+                    output(currentEnemy.attackDesc(player,damage))  
+                else:
+                    endCombat()
+            
+            
+            updateCombat() #update labels to show info
+            
+            if(player.health <= 0):
+                endCombat("enemy")
+            elif(currentEnemy.health <= 0):
+                endCombat("player")        
     saveStats()
 
 def updateInventory():
@@ -249,13 +260,9 @@ def updateInventory():
 def itemDrag(widget):
     global draggedItem
     draggedItem = widget
-    #print("Dragged from:", widget)
     app.raiseFrame("equipped")
 
 def itemDrop(widget):
-    #print("Dropped on:", widget)
-    #print(draggedItem.slot)
-    #if(widget == draggedItem.slot):
     player.equip(draggedItem)
 
 #combat functions
@@ -271,23 +278,30 @@ def updateCombat():
 
 def startCombat():
     global currentEnemy
-    currentEnemy = Mob("enemy",10,13,10,["jabs","claws"])
-    player.health = player.maxHealth #change at some point
+    currentEnemy = random.choice(gameMap[player.posY][player.posX].enemies) #choose an enemy from the biome the player is in
+    currentEnemy.maxHealth += round(random.uniform(-currentEnemy.health/2,currentEnemy.health/2)) #add some variation on their health
+    currentEnemy.health = currentEnemy.maxHealth    
     
-    app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
+    player.health = player.maxHealth #reset player health
     
     app.setTabbedFrameDisabledTab("main","map", True) #disable all other tabs
     app.setTabbedFrameDisabledTab("main","inventory", True)
-    app.setTabbedFrameDisabledTab("main","combat", False)
+    app.setTabbedFrameDisabledTab("main","combat", False)    
+
+    app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
+    
+    
     
     updateCombat()
     
 def endCombat(winner="none"):#default value of no winner
-    app.setTabbedFrameSelectedTab("main","map",False) #go back to normal tabs
     
-    app.setTabbedFrameDisabledTab("main","map", False)
+    app.setTabbedFrameDisabledTab("main","map", False) #go back to normal tabs
     app.setTabbedFrameDisabledTab("main","inventory", False)    
-    app.setTabbedFrameDisabledTab("main","combat", True)  
+    app.setTabbedFrameDisabledTab("main","combat", True)      
+
+    app.setTabbedFrameSelectedTab("main","map",False) 
+    
     if(winner == "enemy"):
         output("You died")
     elif(winner == "player"):
@@ -295,19 +309,21 @@ def endCombat(winner="none"):#default value of no winner
         player.maxHealth += 1
     elif(winner == "none"):
         output("You're a no namer dog")
+    else:
+        output("Something went wrong")
 
 
 """
 variables
 """
 #biome info
-plains = Biome("plains","green","-")
-mountain = Biome("mountain","grey","▲")
-desert = Biome("desert","yellow","⁕")
-forest = Biome("forest","green","⇑")
-ocean = Biome("ocean","blue","≈")
+toxicdump = Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])])
+mountain = Biome("mountain","dimgray","▲",[Mob("Slime",5,5,0,["glomps","slops"])])
+wasteland = Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])])
+burntforest = Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])])
+ocean = Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])
 
-biomes = [plains,mountain,desert,forest,ocean]
+biomes = [toxicdump,mountain,wasteland,burntforest,ocean]
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
@@ -321,8 +337,8 @@ player = Player("player",#name
                 11,#damage
                 10,#armor
                 ["slashes","stabs"],#attack types
-                mapSize/2,#x position
-                mapSize/2,#y position
+                round(mapSize/2),#x position
+                round(mapSize/2),#y position
                 [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),#inventory
                 Armor("Chestplate","A large hunk of metal",27,"body"),
                 Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
@@ -359,21 +375,23 @@ app.startTabbedFrame("main")
 app.setTabbedFrameTabExpand("main", expand=True)
 app.setTabbedFrameChangeCommand("main", updateInventory)
 
+
 #map tab
 app.startTab("map")
 map = app.addCanvas("map")
 map.config(scrollregion=(0,0,(mapSize+2)*iconSize,(mapSize+2)*iconSize)) #x1, y1, x2, y2, height,height=(iconSize*11)+1
 app.stopTab()
 
+
 #inventory tab
-app.startTab("inventory")
+app.startTab("inventory") #items in inventory
 app.startFrame("items",row=0,column=0)
 app.addEmptyLabel("empty")
 app.stopFrame()
 
 app.addVerticalSeparator(row=0,column=1)
 
-app.startFrame("equipped",row=0,column=2)
+app.startFrame("equipped",row=0,column=2) #equipped items
 itemRow = 0
 for slot in player.equipped:
     app.addLabel("%s title"%slot,slot.capitalize(),row=itemRow,column=2)
@@ -385,6 +403,7 @@ for slot in player.equipped:
     itemRow += 1
 app.stopFrame()
 app.stopTab()
+
 
 #combat tab
 app.startTab("combat")
@@ -417,12 +436,11 @@ app.stopFrame()
 
 app.stopTab()
 
-app.startTab("help")
 
+app.startTab("help")
 app.addLabel("helpLabel","""Use the arrow keys to move around the map.
 Click or drag items you want to equip.
 When in combat use A to attack, B to block and R to run.""")
-
 app.stopTab()
 app.stopTabbedFrame()
 
