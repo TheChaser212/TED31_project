@@ -212,13 +212,15 @@ def keys(key):
             if(key == "a"):
                 damage = max(player.damage - currentEnemy.armor,0)
                 currentEnemy.health -= damage
-                output(player.attackDesc(currentEnemy,damage))
+                
                 if(enemyAttacks):
                     damage = max(currentEnemy.damage - player.armor,0)
                     player.health -= damage
-                    output(currentEnemy.attackDesc(player,damage))                    
+                    output(player.attackDesc(currentEnemy,damage)+"\n"+currentEnemy.attackDesc(player,damage))
+                else:
+                    output(player.attackDesc(currentEnemy,damage))
             elif(key == "b"):
-                output("You block the %'s attack!"%currentEnemy.name)
+                output("You block the %s's attack!"%currentEnemy.name)
             elif(key == "r"):
                 if(enemyAttacks):
                     damage = max(currentEnemy.damage - player.armor,0)
@@ -279,8 +281,8 @@ def updateCombat():
 def startCombat():
     global currentEnemy
     currentEnemy = random.choice(gameMap[player.posY][player.posX].enemies) #choose an enemy from the biome the player is in
-    currentEnemy.maxHealth += round(random.uniform(-currentEnemy.health/2,currentEnemy.health/2)) #add some variation on their health
-    currentEnemy.health = currentEnemy.maxHealth    
+    currentEnemy.maxHealth += round(random.uniform(-currentEnemy.maxHealth/2,currentEnemy.maxHealth/2)) #add some variation on their health
+    currentEnemy.health = currentEnemy.maxHealth  
     
     player.health = player.maxHealth #reset player health
     
@@ -318,12 +320,11 @@ variables
 """
 #biome info
 toxicdump = Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])])
-mountain = Biome("mountain","dimgray","▲",[Mob("Slime",5,5,0,["glomps","slops"])])
 wasteland = Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])])
 burntforest = Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])])
 ocean = Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])
 
-biomes = [toxicdump,mountain,wasteland,burntforest,ocean]
+biomes = [toxicdump,wasteland,burntforest,ocean]
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
@@ -426,6 +427,7 @@ app.addVerticalSeparator(row=0,column=1)
 #enemy
 app.startFrame("enemy",row=0,column=2)
 app.addLabel("enemyName","Name")
+
 app.addMeter("enemyHealth",100)
 app.setMeterFill("enemyHealth","Green")
 app.setMeterBg("enemyHealth","Red")
