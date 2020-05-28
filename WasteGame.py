@@ -6,7 +6,7 @@ import pickle
 """
 Define classes
 """
-class Item:
+class Item: #class for items the player can collect
     def __init__(self,name,desc):
         self.name = name
         self.desc = desc
@@ -33,7 +33,7 @@ class Armor(Item): #subclass of item
     def description(self):
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower()) #Item() description + extra info
 
-class Mob:
+class Mob: #class that encompasses all characters
     def __init__(self,name,health,damage,armor,attackTypes):
         self.name = name
         self.health = health
@@ -68,24 +68,24 @@ class Player(Mob): #subclass of Mob
             except:
                 pass
     
-    def equip(self,item):
-        try:
+    def equip(self,item): #equip an item
+        try: #in case players try to equip items that can't be equipped
             self.equipped[item.slot] = item
             output("Equipped %s"%item.name.lower())
             self.updateStats()
-        except:
+        except: 
             output("You can't equip that!")
         updateInventory()
             
-    def unEquip(self,slot):
+    def unEquip(self,slot): #unequip an item
         item = self.equipped[slot]
-        if(self.equipped[slot] != None):
+        if(self.equipped[slot] != None): #can't unequip nothing
             output("Unequipped %s"%item.name.lower())
             self.equipped[slot] = None
             self.updateStats()
-        updateInventory()
+            updateInventory()
         
-class Biome:
+class Biome: #class for biomes
     def __init__(self,name,color,icon,enemies):
         self.name = name
         self.color = color
@@ -96,7 +96,7 @@ class Biome:
 """
 functions
 """
-def output(text):
+def output(text): #set output label text to something
     app.setLabel("output",text)
 
 def saveMap(): #save map
@@ -109,7 +109,7 @@ def saveStats(): #save player stats
     pickle.dump(player,file)
     file.close()    
 
-def saveAll():
+def saveAll(): #save everything
     output("Game saved")
     saveMap()
     saveStats()
@@ -128,14 +128,14 @@ def load(): #load player stats and map
         file = open("map.txt","rb")
         gameMap = pickle.load(file)
         file.close()
-    except FileNotFoundError:
+    except FileNotFoundError: #create a map if no file found (file will be created when it's saved)
         generateMap()
     
     try:
         file = open("player.txt","rb")
         player = pickle.load(file)
         file.close()
-    except FileNotFoundError:
+    except FileNotFoundError: #create player with default stats if no file found (file will be created when it's saved)
         player = Player("player",#name
                 10,#health
                 5,#damage
@@ -147,9 +147,9 @@ def load(): #load player stats and map
                 Armor("Chestplate","A large hunk of metal",27,"Body")])
     
     output("Game loaded")
-    updateMap() #do it at end because player pos might be different
+    updateMap() #update map at end because player pos might have changed
 
-def updateMap(): #reload map
+def updateMap(): #clear all the tiles on the map and readd them
     app.clearCanvas("map")
     a = 0
     for y in gameMap:
@@ -162,22 +162,24 @@ def updateMap(): #reload map
             map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color) #x1, y1, x2, y2, color
             map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
     
+    #create and move to player tile
     map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
     map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
-    map.yview_moveto((player.posY-5)/(mapSize+2))  #show player position + 5 tiles up  
+    map.yview_moveto((player.posY-5)/(mapSize+2)) #show player position + 5 tiles up  
 
-def onMove():
+def onMove(): #things to do when the player moves
+    #move map to where player is
     map.xview_moveto((player.posX-5)/(mapSize+2))
     map.yview_moveto((player.posY-5)/(mapSize+2))
     
-    if(random.randint(1,4)==1):
-        startCombat()#testing    
+    if(random.randint(1,4)==1): #1 in 4 chance of starting combat
+        startCombat()   
 
-def keys(key):
+def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main")
     
-    if(currentTab == "map"):
+    if(currentTab == "map"): #movement on map
         playerObj = map.find_withtag("player")
         if(key == "Left"):
             if(player.posX != 1):
@@ -205,16 +207,16 @@ def keys(key):
                 onMove()
         
         
-    elif(currentTab == "combat"):
-        if(key in ["a","b","r"]):
+    elif(currentTab == "combat"): #combat stuff
+        if(key in ["a","b","r"]):#only get attacked when using keys related to combat   
             global currentEnemy
             enemyAttacks = (random.random() > 0.5)
             if(key == "a"):
-                damage = max(player.damage - currentEnemy.armor,0)
+                damage = max(player.damage - currentEnemy.armor,1)
                 currentEnemy.health -= damage
                 
                 if(enemyAttacks):
-                    damage = max(currentEnemy.damage - player.armor,0)
+                    damage = max(currentEnemy.damage - player.armor,1)
                     player.health -= damage
                     output(player.attackDesc(currentEnemy,damage)+"\n"+currentEnemy.attackDesc(player,damage))
                 else:
@@ -223,7 +225,7 @@ def keys(key):
                 output("You block the %s's attack!"%currentEnemy.name)
             elif(key == "r"):
                 if(enemyAttacks):
-                    damage = max(currentEnemy.damage - player.armor,0)
+                    damage = max(currentEnemy.damage - player.armor,1)
                     player.health -= damage
                     output(currentEnemy.attackDesc(player,damage))  
                 else:
@@ -238,8 +240,8 @@ def keys(key):
                 endCombat("player")        
     saveStats()
 
-def updateInventory():
-    if(app.getTabbedFrameSelectedTab("main") != "inventory"):
+def updateInventory(): #add labels for all the items in the player's inventory and what they have equipped
+    if(app.getTabbedFrameSelectedTab("main") != "inventory"): #dont bother updating inventory labels if not on the tab
         return
     app.openFrame("items")
     app.emptyCurrentContainer()
@@ -254,21 +256,20 @@ def updateInventory():
         try:
             app.setLabel(slot,item.name)
             app.setLabelTooltip(slot, item.description())
-            
         except:#if no item equipped in slot
             app.setLabel(slot,"Nothing")
             app.setLabelTooltip(slot, "")
 
-def itemDrag(widget):
+def itemDrag(widget): #find the item that's being dragged by mouse
     global draggedItem
     draggedItem = widget
     app.raiseFrame("equipped")
 
-def itemDrop(widget):
+def itemDrop(widget): #equip item that is dropped by mouse
     player.equip(draggedItem)
 
 #combat functions
-def updateCombat():
+def updateCombat(): #set labels/meters to match new stats
     app.setMeter("playerHealth",100*player.health/player.maxHealth,text=player.health)
     app.setLabel("playerDamage","Damage: %i"%player.damage)
     app.setLabel("playerArmor","Armor: %i"%player.armor)
@@ -278,7 +279,7 @@ def updateCombat():
     app.setLabel("enemyDamage","Damage: %i"%currentEnemy.damage)
     app.setLabel("enemyArmor","Armor: %i"%currentEnemy.armor)
 
-def startCombat():
+def startCombat(): #start combat by generating an enemy and disabling unrelated tabs
     global currentEnemy
     currentEnemy = random.choice(gameMap[player.posY][player.posX].enemies) #choose an enemy from the biome the player is in
     currentEnemy.maxHealth += round(random.uniform(-currentEnemy.maxHealth/2,currentEnemy.maxHealth/2)) #add some variation on their health
@@ -296,7 +297,7 @@ def startCombat():
     
     updateCombat()
     
-def endCombat(winner="none"):#default value of no winner
+def endCombat(winner="none"):#end the combat with default value of no winner
     
     app.setTabbedFrameDisabledTab("main","map", False) #go back to normal tabs
     app.setTabbedFrameDisabledTab("main","inventory", False)    
@@ -310,7 +311,7 @@ def endCombat(winner="none"):#default value of no winner
         output("You win")
         player.maxHealth += 1
     elif(winner == "none"):
-        output("You're a no namer dog")
+        output("You managed to ran away")
     else:
         output("Something went wrong")
 
