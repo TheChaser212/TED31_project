@@ -19,7 +19,7 @@ class Weapon(Item): #subclass of item
         super().__init__(name,desc) #calls init of item class
         self.damage = damage
         self.attackTypes = attackTypes
-        self.slot = "weapon"
+        self.slot = "weapon" #all weapons are equipped in weapon slot (by default)
     
     def description(self):
         return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage) #Item() description + extra info
@@ -43,27 +43,28 @@ class Mob: #class that encompasses all characters
         self.attackTypes = attackTypes
     
     def attackDesc(self,other,damage):
-        return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage)
+        return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attacks at other, doing num damage
 
 class Player(Mob): #subclass of Mob
     def __init__(self,name,health,damage,armor,attackTypes,posX,posY,inventory):
         super().__init__(name,health,damage,armor,attackTypes)
         self.posX = posX
         self.posY = posY
-        self.icon = "X"
-        self.color = "white"
+        self.icon = "X" #default icon
+        self.color = "white" #default color
         self.inventory = inventory
-        self.equipped = {"weapon":None,"head":None,"body":None,"legs":None}
+        self.equipped = {"weapon":None,"head":None,"body":None,"legs":None} #nothing equipped by default
         
     def updateStats(self):
         self.damage = 0
         self.armor = 0
         for item in self.equipped:
-            try:
+            try: #make sure it actually has a damage
                 self.damage += self.equipped[item].damage
             except:
                 pass
-            try:
+            
+            try: #make sure it actually has armor
                 self.armor += self.equipped[item].armor
             except:
                 pass
@@ -80,7 +81,7 @@ class Player(Mob): #subclass of Mob
     def unEquip(self,slot): #unequip an item
         item = self.equipped[slot]
         if(self.equipped[slot] != None): #can't unequip nothing
-            output("Unequipped %s"%item.name.lower())
+            output("Unequipped %s"%item.name.lower()) #give player feedback
             self.equipped[slot] = None
             self.updateStats()
             updateInventory()
@@ -116,22 +117,23 @@ def saveAll(): #save everything
 
 def generateMap(): #create new map
     for y in range(mapSize):
+        print(y)
         gameMap.append([])
         for x in range(mapSize):
-            gameMap[y].append(random.choice(biomes))
-    saveMap()
+            gameMap[y].append(random.choice(biomes)) #add a random biome for each tile
+    updateMap()
+    saveMap() #save the map once it's generated
 
 def load(): #load player stats and map
-    global gameMap
-    global player
-    try:
+    global gameMap, player
+    try: #don't open files that don't exist
         file = open("map.txt","rb")
         gameMap = pickle.load(file)
         file.close()
     except FileNotFoundError: #create a map if no file found (file will be created when it's saved)
         generateMap()
     
-    try:
+    try: #don't open files that don't exist
         file = open("player.txt","rb")
         player = pickle.load(file)
         file.close()
@@ -157,9 +159,9 @@ def updateMap(): #clear all the tiles on the map and readd them
         b=0   
         for x in y:
             b+=1
-            name = str(a)+" "+str(b)
+            name = str(a)+" "+str(b) # "y x" so we can change the tiles later
                    
-            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color) #x1, y1, x2, y2, color
+            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0) #x1, y1, x2, y2, color
             map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
     
     #create and move to player tile
@@ -172,9 +174,10 @@ def onMove(): #things to do when the player moves
     #move map to where player is
     map.xview_moveto((player.posX-5)/(mapSize+2))
     map.yview_moveto((player.posY-5)/(mapSize+2))
-    
+    print(gameMap[player.posY][player.posX].name)
     if(random.randint(1,4)==1): #1 in 4 chance of starting combat
-        startCombat()   
+        #startCombat()   
+        pass
 
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main")
@@ -182,41 +185,41 @@ def keys(key): #what to do whenever a key is pressed
     if(currentTab == "map"): #movement on map
         playerObj = map.find_withtag("player")
         if(key == "Left"):
-            if(player.posX != 1):
+            if(player.posX != 1): #prevent going off the map
                 player.posX -= 1
                 for p in playerObj:
                     map.move(p,-iconSize,0) #move object x, y
                 onMove()
         elif(key == "Right"):
-            if(player.posX != mapSize):
+            if(player.posX != mapSize): #prevent going off the map
                 player.posX += 1
                 for p in playerObj:
                     map.move(p,iconSize,0)
                 onMove()
         elif(key == "Up"):
-            if(player.posY != 1):
+            if(player.posY != 1): #prevent going off the map
                 player.posY -= 1  
                 for p in playerObj:
                     map.move(p,0,-iconSize)
                 onMove()
         elif(key == "Down"):
-            if(player.posY != mapSize):
+            if(player.posY != mapSize): #prevent going off the map
                 player.posY += 1
                 for p in playerObj:
                     map.move(p,0,iconSize)
                 onMove()
         
         
-    elif(currentTab == "combat"): #combat stuff
+    elif(currentTab == "combat"): #only work on combat tab
         if(key in ["a","b","r"]):#only get attacked when using keys related to combat   
             global currentEnemy
-            enemyAttacks = (random.random() > 0.5)
+            enemyAttacks = (random.random() > 0.5) #50% chance enemy attacks
             if(key == "a"):
-                damage = max(player.damage - currentEnemy.armor,1)
+                damage = max(player.damage - currentEnemy.armor,1) #prevent negative damage
                 currentEnemy.health -= damage
                 
                 if(enemyAttacks):
-                    damage = max(currentEnemy.damage - player.armor,1)
+                    damage = max(currentEnemy.damage - player.armor,1) #prevent negative damage
                     player.health -= damage
                     output(player.attackDesc(currentEnemy,damage)+"\n"+currentEnemy.attackDesc(player,damage))
                 else:
@@ -225,11 +228,11 @@ def keys(key): #what to do whenever a key is pressed
                 output("You block the %s's attack!"%currentEnemy.name)
             elif(key == "r"):
                 if(enemyAttacks):
-                    damage = max(currentEnemy.damage - player.armor,1)
+                    damage = max(currentEnemy.damage - player.armor,1) #prevent negative damage
                     player.health -= damage
                     output(currentEnemy.attackDesc(player,damage))  
                 else:
-                    endCombat()
+                    endCombat() #end combat with no winner
             
             
             updateCombat() #update labels to show info
@@ -238,7 +241,7 @@ def keys(key): #what to do whenever a key is pressed
                 endCombat("enemy")
             elif(currentEnemy.health <= 0):
                 endCombat("player")        
-    saveStats()
+    #saveStats()
 
 def updateInventory(): #add labels for all the items in the player's inventory and what they have equipped
     if(app.getTabbedFrameSelectedTab("main") != "inventory"): #dont bother updating inventory labels if not on the tab
@@ -253,7 +256,7 @@ def updateInventory(): #add labels for all the items in the player's inventory a
     
     for slot in player.equipped:
         item = player.equipped[slot]
-        try:
+        try: #make sure it's an actual equipment
             app.setLabel(slot,item.name)
             app.setLabelTooltip(slot, item.description())
         except:#if no item equipped in slot
