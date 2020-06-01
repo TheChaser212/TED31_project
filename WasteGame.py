@@ -117,7 +117,6 @@ def saveAll(): #save everything
 
 def generateMap(): #create new map
     for y in range(mapSize):
-        print(y)
         gameMap.append([])
         for x in range(mapSize):
             gameMap[y].append(random.choice(biomes)) #add a random biome for each tile
@@ -165,7 +164,7 @@ def updateMap(): #clear all the tiles on the map and readd them
         a+=1
     
     #create and move to player tile
-    map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
+    map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize-1, player.posY*iconSize+iconSize-1,fill=player.color,tags="player") 
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
     map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
     map.yview_moveto((player.posY-5)/(mapSize+2)) #show player position + 5 tiles up  
