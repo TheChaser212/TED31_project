@@ -155,14 +155,14 @@ def updateMap(): #clear all the tiles on the map and readd them
     app.clearCanvas("map")
     a = 0
     for y in gameMap:
-        a+=1
         b=0   
         for x in y:
-            b+=1
             name = str(a)+" "+str(b) # "y x" so we can change the tiles later
                    
             map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0) #x1, y1, x2, y2, color
             map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
+            b+=1
+        a+=1
     
     #create and move to player tile
     map.create_rectangle(player.posX*iconSize, player.posY*iconSize, player.posX*iconSize+iconSize, player.posY*iconSize+iconSize,fill=player.color,tags="player") 
@@ -174,36 +174,34 @@ def onMove(): #things to do when the player moves
     #move map to where player is
     map.xview_moveto((player.posX-5)/(mapSize+2))
     map.yview_moveto((player.posY-5)/(mapSize+2))
-    print(gameMap[player.posY][player.posX].name)
     if(random.randint(1,4)==1): #1 in 4 chance of starting combat
-        #startCombat()   
-        pass
+        startCombat()   
 
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main")
     
     if(currentTab == "map"): #movement on map
-        playerObj = map.find_withtag("player")
+        playerObj = map.find_withtag("player") #get all canvas objects with 'player' tag
         if(key == "Left"):
-            if(player.posX != 1): #prevent going off the map
+            if(player.posX != 0): #prevent going off the map
                 player.posX -= 1
                 for p in playerObj:
                     map.move(p,-iconSize,0) #move object x, y
                 onMove()
         elif(key == "Right"):
-            if(player.posX != mapSize): #prevent going off the map
+            if(player.posX != mapSize-1): #prevent going off the map
                 player.posX += 1
                 for p in playerObj:
                     map.move(p,iconSize,0)
                 onMove()
         elif(key == "Up"):
-            if(player.posY != 1): #prevent going off the map
+            if(player.posY != 0): #prevent going off the map
                 player.posY -= 1  
                 for p in playerObj:
                     map.move(p,0,-iconSize)
                 onMove()
         elif(key == "Down"):
-            if(player.posY != mapSize): #prevent going off the map
+            if(player.posY != mapSize-1): #prevent going off the map
                 player.posY += 1
                 for p in playerObj:
                     map.move(p,0,iconSize)
