@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
-from appJar import gui
-import random
-import pickle
+from appJar import gui #gui module
+import random #random stuff
+import pickle #saving module
 
 """
 Define classes
@@ -42,7 +42,7 @@ class Mob: #class that encompasses all characters
         self.armor = armor
         self.attackTypes = attackTypes
     
-    def attackDesc(self,other,damage): #
+    def attackDesc(self,other,damage): #description of combat between two mobs
         return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attacks at other, doing num damage
 
 class Player(Mob): #subclass of Mob
@@ -100,7 +100,12 @@ functions
 def output(text): #set output label text to something
     app.setLabel("output",text)
 
-
+def loot():
+    item = random.choice(items)
+    print(item.name)
+    output("You pick up a "+item.name)
+    player.inventory.append(item)
+    
 """
 saving/loading functions
 """
@@ -336,6 +341,7 @@ def endCombat(winner="none"):#end the combat with default value of no winner
     elif(winner == "player"):
         output("You win")
         player.maxHealth += 1
+        loot()
     elif(winner == "none"): #player ran away
         output("You managed to ran away")
     else: #shouldn't ever happen
@@ -346,12 +352,14 @@ def endCombat(winner="none"):#end the combat with default value of no winner
 variables
 """
 #biome info
-toxicdump = Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])])
-wasteland = Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])])
-burntforest = Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])])
-ocean = Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])
+biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])]),
+          Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])]),
+          Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])]),
+          Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])]
 
-biomes = [toxicdump,wasteland,burntforest,ocean]
+items = [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
+        Armor("Chestplate","A large hunk of metal",27,"body"),
+        Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])]
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
@@ -379,6 +387,7 @@ currentEnemy = Mob("enemy",#name
                    10,#armor
                    ["jabs","claws"]#attack types
                    )
+
 draggedItem = 0 #currently dragged widget
 
 
