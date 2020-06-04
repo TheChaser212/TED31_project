@@ -11,7 +11,7 @@ class Item: #class for items the player can collect
         self.name = name
         self.desc = desc
         
-    def description(self):
+    def description(self): #return description of item
         return self.desc
         
 class Weapon(Item): #subclass of item
@@ -21,7 +21,7 @@ class Weapon(Item): #subclass of item
         self.attackTypes = attackTypes
         self.slot = "weapon" #all weapons are equipped in weapon slot (by default)
     
-    def description(self):
+    def description(self): #return description of weapon
         return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage) #Item() description + extra info
 
 class Armor(Item): #subclass of item
@@ -30,7 +30,7 @@ class Armor(Item): #subclass of item
         self.armor = armor
         self.slot = slot
     
-    def description(self):
+    def description(self): #return description of armor
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower()) #Item() description + extra info
 
 class Mob: #class that encompasses all characters
@@ -42,7 +42,7 @@ class Mob: #class that encompasses all characters
         self.armor = armor
         self.attackTypes = attackTypes
     
-    def attackDesc(self,other,damage):
+    def attackDesc(self,other,damage): #
         return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attacks at other, doing num damage
 
 class Player(Mob): #subclass of Mob
@@ -55,7 +55,7 @@ class Player(Mob): #subclass of Mob
         self.inventory = inventory
         self.equipped = {"weapon":None,"head":None,"body":None,"legs":None} #nothing equipped by default
         
-    def updateStats(self):
+    def updateStats(self): #set stats to match equipment
         self.damage = 0
         self.armor = 0
         for item in self.equipped:
@@ -100,6 +100,10 @@ functions
 def output(text): #set output label text to something
     app.setLabel("output",text)
 
+
+"""
+saving/loading functions
+"""
 def saveMap(): #save map
     file = open("map.txt","wb")
     pickle.dump(gameMap, file)
@@ -114,15 +118,7 @@ def saveAll(): #save everything
     output("Game saved")
     saveMap()
     saveStats()
-
-def generateMap(): #create new map
-    for y in range(mapSize):
-        gameMap.append([])
-        for x in range(mapSize):
-            gameMap[y].append(random.choice(biomes)) #add a random biome for each tile
-    updateMap()
-    saveMap() #save the map once it's generated
-
+    
 def load(): #load player stats and map
     global gameMap, player
     try: #don't open files that don't exist
@@ -150,6 +146,18 @@ def load(): #load player stats and map
     output("Game loaded")
     updateMap() #update map at end because player pos might have changed
 
+
+"""
+map functions
+"""
+def generateMap(): #create new map
+    for y in range(mapSize):
+        gameMap.append([])
+        for x in range(mapSize):
+            gameMap[y].append(random.choice(biomes)) #add a random biome for each tile
+    updateMap()
+    saveMap() #save the map once it's generated
+
 def updateMap(): #clear all the tiles on the map and readd them
     app.clearCanvas("map")
     a = 0
@@ -169,15 +177,25 @@ def updateMap(): #clear all the tiles on the map and readd them
     map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
     map.yview_moveto((player.posY-5)/(mapSize+2)) #show player position + 5 tiles up  
 
+
+"""
+input related functions
+"""
 def onMove(): #things to do when the player moves
     #move map to where player is
     map.xview_moveto((player.posX-5)/(mapSize+2))
     map.yview_moveto((player.posY-5)/(mapSize+2))
-    if(random.randint(1,4)==1): #1 in 4 chance of starting combat
+    
+    event = random.randint(1,4)
+    if(event == 1): #1 in 4 chance of starting combat
         startCombat()   
+    elif(event == 2):
+        loot()
+    else:#2 in 5 chance of no event
+        pass
 
 def keys(key): #what to do whenever a key is pressed
-    currentTab = app.getTabbedFrameSelectedTab("main")
+    currentTab = app.getTabbedFrameSelectedTab("main") #find the current tab
     
     if(currentTab == "map"): #movement on map
         playerObj = map.find_withtag("player") #get all canvas objects with 'player' tag
@@ -240,6 +258,10 @@ def keys(key): #what to do whenever a key is pressed
                 endCombat("player")        
     #saveStats()
 
+
+"""
+inventory functions
+"""
 def updateInventory(): #add labels for all the items in the player's inventory and what they have equipped
     if(app.getTabbedFrameSelectedTab("main") != "inventory"): #dont bother updating inventory labels if not on the tab
         return
@@ -268,7 +290,10 @@ def itemDrag(widget): #find the item that's being dragged by mouse
 def itemDrop(widget): #equip item that is dropped by mouse
     player.equip(draggedItem)
 
-#combat functions
+
+"""
+combat functions
+"""
 def updateCombat(): #set labels/meters to match new stats
     app.setMeter("playerHealth",100*player.health/player.maxHealth,text=player.health)
     app.setLabel("playerDamage","Damage: %i"%player.damage)
@@ -305,14 +330,15 @@ def endCombat(winner="none"):#end the combat with default value of no winner
 
     app.setTabbedFrameSelectedTab("main","map",False) 
     
+    #stuff do based on who won
     if(winner == "enemy"):
         output("You died")
     elif(winner == "player"):
         output("You win")
         player.maxHealth += 1
-    elif(winner == "none"):
+    elif(winner == "none"): #player ran away
         output("You managed to ran away")
-    else:
+    else: #shouldn't ever happen
         output("Something went wrong")
 
 
