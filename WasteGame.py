@@ -272,13 +272,15 @@ def updateInventory(): #add labels for all the items in the player's inventory a
     app.openFrame("items")
     app.emptyCurrentContainer()
     for i in player.inventory:
-        try: #in case there are two of the same item
+        try: #in case there are multiple of the same item
             app.addLabel(i,i.name)
             app.setLabelTooltip(i, i.description())
             app.setLabelRelief(i,"raised")
             app.setLabelDragFunction(i, [itemDrag, itemDrop])
-        except: #if two of the same item set the label to show the amount
+        except: #if multiple of the same item set the label to show the amount
             app.setLabel(i,"%s x%i"%(i.name,player.inventory.count(i)))
+    app.stopFrame()
+    
     
     for slot in player.equipped:
         item = player.equipped[slot]
