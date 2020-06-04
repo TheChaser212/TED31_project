@@ -102,7 +102,6 @@ def output(text): #set output label text to something
 
 def loot():
     item = random.choice(items)
-    print(item.name)
     output("You pick up a "+item.name)
     player.inventory.append(item)
     
@@ -273,10 +272,13 @@ def updateInventory(): #add labels for all the items in the player's inventory a
     app.openFrame("items")
     app.emptyCurrentContainer()
     for i in player.inventory:
-        app.addLabel(i,i.name)
-        app.setLabelTooltip(i, i.description())
-        app.setLabelRelief(i,"raised")
-        app.setLabelDragFunction(i, [itemDrag, itemDrop])
+        try: #in case there are two of the same item
+            app.addLabel(i,i.name)
+            app.setLabelTooltip(i, i.description())
+            app.setLabelRelief(i,"raised")
+            app.setLabelDragFunction(i, [itemDrag, itemDrop])
+        except: #if two of the same item set the label to show the amount
+            app.setLabel(i,"%s x%i"%(i.name,player.inventory.count(i)))
     
     for slot in player.equipped:
         item = player.equipped[slot]
@@ -375,9 +377,8 @@ player = Player("player",#name
                 ["slashes","stabs"],#attack types
                 round(mapSize/2),#x position
                 round(mapSize/2),#y position
-                [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),#inventory
-                Armor("Chestplate","A large hunk of metal",27,"body"),
-                Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])])
+                []#inventory
+                )
                 
 
 #enemy that's being fought
