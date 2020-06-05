@@ -93,6 +93,20 @@ class Biome: #class for biomes
         self.icon = icon
         self.enemies = enemies
 
+class Recipe: #class for recipes
+    def __init__(self,required,output):
+        self.required = required #list of items needed
+        self.output = output #what is made
+        
+    def craft(self):
+        for requirement in self.required:
+            if(player.inventory.count(requirement) >= 1):
+                pass
+            else:
+                return #can't craft something if you don't have the requirements
+        for requirement in self.required:
+            player.inventory.removed(required)
+        player.inventory.append(output)
 
 """
 functions
@@ -104,7 +118,7 @@ def loot():
     item = random.choice(items)
     output("You pick up a "+item.name)
     player.inventory.append(item)
-    
+
 """
 saving/loading functions
 """
@@ -195,7 +209,7 @@ def onMove(): #things to do when the player moves
         startCombat()   
     elif(event == 2):
         loot()
-    else:#2 in 5 chance of no event
+    else:#2 in 4 chance of no event
         pass
 
 def keys(key): #what to do whenever a key is pressed
@@ -364,6 +378,8 @@ biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])]
 items = [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
         Armor("Chestplate","A large hunk of metal",27,"body"),
         Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])]
+
+recipes = [Recipe([items[0],items[1]],items[2])]
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
