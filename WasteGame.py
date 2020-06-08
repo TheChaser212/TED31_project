@@ -102,6 +102,7 @@ class Recipe: #class for recipes
         for requirement in self.required:
             if(not (player.inventory.count(requirement) >= 1)): #if not at least one of the required item (may cause issues if a recipe needs multiple of the same item)
                 print("failed to craft "+self.crafted.name)
+                output("You don't have a %s!"%requirement.name.lower())
                 return #can't craft something if you don't have the requirements
         
         for requirement in self.required:
@@ -109,7 +110,13 @@ class Recipe: #class for recipes
         
         output("Crafted a "+self.crafted.name.lower())
         player.inventory.append(self.crafted) #add the item
-
+    
+    def description(self):
+        desc = "To craft the %s you need: "%self.crafted.name.lower()
+        for requirement in self.required:
+            desc += "%s, "%requirement.name.lower()
+        print(desc)
+        return desc
 """
 functions
 """
@@ -319,6 +326,11 @@ def itemDrop(widget): #equip item that is dropped by mouse
     player.equip(draggedItem)
 
 
+def showRecipe(widget):
+    print(widget)
+    print(type(widget))
+    widget.craft()
+
 """
 combat functions
 """
@@ -462,6 +474,18 @@ for slot in player.equipped:
     app.setLabelSubmitFunction(slot, player.unEquip)
     
     itemRow += 1
+app.stopFrame()
+app.stopTab()
+
+
+#crafting tab
+app.startTab("crafting")
+app.startFrame("recipes",row=0,column=0)
+for recipe in recipes:
+    app.addLabel(recipe,recipe.crafted.name)
+    app.setLabelTooltip(recipe, recipe.description())
+    app.setLabelRelief(recipe,"raised")
+    app.setLabelSubmitFunction(recipe, showRecipe)
 app.stopFrame()
 app.stopTab()
 
