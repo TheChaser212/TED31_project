@@ -94,19 +94,21 @@ class Biome: #class for biomes
         self.enemies = enemies
 
 class Recipe: #class for recipes
-    def __init__(self,required,output):
+    def __init__(self,required,crafted):
         self.required = required #list of items needed
-        self.output = output #what is made
+        self.crafted = crafted #what is made
         
     def craft(self):
         for requirement in self.required:
-            if(player.inventory.count(requirement) >= 1):
-                pass
-            else:
+            if(not (player.inventory.count(requirement) >= 1)): #if not at least one of the required item (may cause issues if a recipe needs multiple of the same item)
+                print("failed to craft "+self.crafted.name)
                 return #can't craft something if you don't have the requirements
+        
         for requirement in self.required:
-            player.inventory.removed(required)
-        player.inventory.append(output)
+            player.inventory.remove(requirement) #remove each required item
+        
+        output("Crafted a "+self.crafted.name.lower())
+        player.inventory.append(self.crafted) #add the item
 
 """
 functions
@@ -214,6 +216,9 @@ def onMove(): #things to do when the player moves
 
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main") #find the current tab
+    
+    if(key == "c"):
+        recipes[0].craft()
     
     if(currentTab == "map"): #movement on map
         playerObj = map.find_withtag("player") #get all canvas objects with 'player' tag
@@ -516,5 +521,5 @@ else:
     generateMap()
 updateMap()
 
-app.bindKeys(["Left","Right","Up","Down","a","b","r"], keys)
+app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
 app.go()
