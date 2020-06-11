@@ -114,8 +114,7 @@ class Recipe: #class for recipes
     def description(self):
         desc = "To craft the %s you need: "%self.crafted.name.lower()
         for requirement in self.required:
-            desc += "%s, "%requirement.name.lower()
-        print(desc)
+            desc += "\n%s"%requirement.name.lower()
         return desc
 """
 functions
@@ -304,7 +303,7 @@ def updateInventory(): #add labels for all the items in the player's inventory a
             app.setLabelRelief(i,"raised")
             app.setLabelDragFunction(i, [itemDrag, itemDrop])
         except: #if multiple of the same item set the label to show the amount
-            app.setLabel(i,"%s x%i"%(i.name,player.inventory.count(i)))
+            app.setLabel(i,"%s x%i"%(i.name,player.inventory.count(i))) #Thing xNum
     app.stopFrame()
     
     
@@ -327,9 +326,11 @@ def itemDrop(widget): #equip item that is dropped by mouse
 
 
 def showRecipe(widget):
-    print(widget)
-    print(type(widget))
-    widget.craft()
+    app.openFrame("craftInfo")
+    app.emptyCurrentContainer()
+    app.addLabel("craftDesc",widget.description())
+    app.addButton("craft",widget.craft)
+    app.stopFrame()
 
 """
 combat functions
@@ -392,11 +393,15 @@ biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])]
           Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])]),
           Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])]
 
+#list of every item
 items = [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
         Armor("Chestplate","A large hunk of metal",27,"body"),
         Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])]
 
-recipes = [Recipe([items[0],items[1]],items[2])]
+#list of every recipe
+#need to use index of the item in the items list so that the Item object is correct
+recipes = [Recipe([items[0],items[1]],items[2]),
+           Recipe([items[2],items[1]],items[0])] 
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
@@ -442,11 +447,12 @@ app.setSticky('esw')
 app.addLabel("title", "Waste Adventure")
 
 
-app.setSticky("NEWS")
+app.setSticky("nesw")
 app.setStretch("both")
-app.startTabbedFrame("main")
-app.setTabbedFrameTabExpand("main", expand=True)
-app.setTabbedFrameChangeCommand("main", updateInventory)
+
+app.startTabbedFrame("main")#tabs in the gui
+app.setTabbedFrameTabExpand("main", expand=True) #expand to fit whole gui
+app.setTabbedFrameChangeCommand("main", updateInventory) #when changing tab call updateInventory(), a return in that function prevents it from happening on wrong tab
 
 
 #map tab
@@ -459,7 +465,6 @@ app.stopTab()
 #inventory tab
 app.startTab("inventory") #items in inventory
 app.startFrame("items",row=0,column=0)
-app.addEmptyLabel("empty")
 app.stopFrame()
 
 app.addVerticalSeparator(row=0,column=1)
@@ -478,15 +483,23 @@ app.stopFrame()
 app.stopTab()
 
 
+
 #crafting tab
 app.startTab("crafting")
 app.startFrame("recipes",row=0,column=0)
 for recipe in recipes:
+    app.setSticky("ew")  
     app.addLabel(recipe,recipe.crafted.name)
     app.setLabelTooltip(recipe, recipe.description())
     app.setLabelRelief(recipe,"raised")
     app.setLabelSubmitFunction(recipe, showRecipe)
 app.stopFrame()
+
+app.addVerticalSeparator(row=0,column=1)
+
+app.startFrame("craftInfo",row=0,column=3)#place where crafting description and button go
+app.stopFrame()
+
 app.stopTab()
 
 
