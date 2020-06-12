@@ -87,11 +87,18 @@ class Player(Mob): #subclass of Mob
             updateInventory()
         
 class Biome: #class for biomes
-    def __init__(self,name,color,icon,enemies):
+    def __init__(self,name,color,icon,enemies,cleanBiome=None):
         self.name = name
         self.color = color
         self.icon = icon
         self.enemies = enemies
+        self.cleanBiome = cleanBiome
+    
+    def clean(self):
+        if(self.cleanBiome != None):
+            print("cleaning %s"%self.name)
+            self = self.cleanBiome
+            print("cleaned %s"%self.name)
 
 class Recipe: #class for recipes
     def __init__(self,required,crafted):
@@ -101,7 +108,7 @@ class Recipe: #class for recipes
     def craft(self):
         for requirement in self.required:
             if(not (player.inventory.count(requirement) >= 1)): #if not at least one of the required item (may cause issues if a recipe needs multiple of the same item)
-                print("failed to craft "+self.crafted.name)
+                #print("failed to craft "+self.crafted.name)
                 output("You don't have a %s!"%requirement.name.lower())
                 return #can't craft something if you don't have the requirements
         
@@ -192,7 +199,7 @@ def updateMap(): #clear all the tiles on the map and readd them
         for x in y:
             name = str(a)+" "+str(b) # "y x" so we can change the tiles later
                    
-            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0) #x1, y1, x2, y2, color
+            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0, tags=name) #x1, y1, x2, y2, color
             map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
             b+=1
         a+=1
@@ -202,7 +209,6 @@ def updateMap(): #clear all the tiles on the map and readd them
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
     map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
     map.yview_moveto((player.posY-5)/(mapSize+2)) #show player position + 5 tiles up  
-
 
 """
 input related functions
@@ -219,6 +225,7 @@ def onMove(): #things to do when the player moves
         loot()
     else:#2 in 4 chance of no event
         pass
+    gameMap[player.posY][player.posX].clean() #'clean' the biome once you've done something
 
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main") #find the current tab
@@ -388,8 +395,8 @@ def endCombat(winner="none"):#end the combat with default value of no winner
 variables
 """
 #biome info
-biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])]),
-          Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])]),
+biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])],Biome("plains","limegreen","-",None)),
+          Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])],Biome("desert","palegoldenrod","⁕",None)),
           Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])]),
           Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])]
 
