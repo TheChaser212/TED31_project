@@ -363,21 +363,19 @@ def updateCombat(): #set labels/meters to match new stats
 def startCombat(): #start combat by generating an enemy and disabling unrelated tabs
     global currentEnemy
     if not (gameMap[player.posY][player.posX].enemies):
-        print("no enemies in this biome")
         return
     currentEnemy = random.choice(gameMap[player.posY][player.posX].enemies) #choose an enemy from the biome the player is in
-    currentEnemy.maxHealth += round(random.uniform(-currentEnemy.maxHealth/2,currentEnemy.maxHealth/2)) #add some variation on their health
+    currentEnemy.maxHealth += round(random.uniform(-currentEnemy.maxHealth/2,currentEnemy.maxHealth/2)) #add some variation on their health between 0.5 and 1.5 times 
     currentEnemy.health = currentEnemy.maxHealth  
     
     player.health = player.maxHealth #reset player health
     
     app.setTabbedFrameDisabledTab("main","map", True) #disable all other tabs
     app.setTabbedFrameDisabledTab("main","inventory", True)
+    app.setTabbedFrameDisabledTab("main","crafting", True)
     app.setTabbedFrameDisabledTab("main","combat", False)    
 
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
-    
-    
     
     updateCombat()
     
@@ -385,6 +383,7 @@ def endCombat(winner="none"):#end the combat with default value of no winner
     
     app.setTabbedFrameDisabledTab("main","map", False) #go back to normal tabs
     app.setTabbedFrameDisabledTab("main","inventory", False)    
+    app.setTabbedFrameDisabledTab("main","crafting", False)
     app.setTabbedFrameDisabledTab("main","combat", True)      
 
     app.setTabbedFrameSelectedTab("main","map",False) 
@@ -425,7 +424,7 @@ recipes = [Recipe([items[0],items[1]],items[2]),
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
-mapSize = 4 #size of the map
+mapSize = 50 #size of the map
 
 loadGame = False #load game or not
 
@@ -577,6 +576,8 @@ if(loadGame):#load by default or not
 else:
     generateMap()
 updateMap()
+
+gameMap[player.posY][player.posX].clean() #'clean' the starting biome
 
 app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
 app.go()
