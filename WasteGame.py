@@ -96,9 +96,8 @@ class Biome: #class for biomes
     
     def clean(self):
         if(self.cleanBiome != None):
-            print("cleaning %s"%self.name)
-            self = self.cleanBiome
-            print("cleaned %s"%self.name)
+            gameMap[player.posY][player.posX] = self.cleanBiome
+            updateTile(player.posX,player.posY)
 
 class Recipe: #class for recipes
     def __init__(self,required,crafted):
@@ -197,10 +196,10 @@ def updateMap(): #clear all the tiles on the map and readd them
     for y in gameMap:
         b=0   
         for x in y:
-            name = str(a)+" "+str(b) # "y x" so we can change the tiles later
+            name = str(b)+" "+str(a) # "x y" so we can change the tiles later
                    
-            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0, tags=name) #x1, y1, x2, y2, color
-            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon)
+            map.create_rectangle(b*iconSize, a*iconSize, b*iconSize+iconSize, a*iconSize+iconSize, fill=x.color, width=0, tags=[name]) #x1, y1, x2, y2, color
+            map.create_text((b*iconSize)+(iconSize/2), (a*iconSize)+(iconSize/2), text = x.icon, tags=[name])
             b+=1
         a+=1
     
@@ -209,6 +208,15 @@ def updateMap(): #clear all the tiles on the map and readd them
     map.create_text((player.posX*iconSize)+(iconSize/2), (player.posY*iconSize)+(iconSize/2),text = player.icon,tags="player")                
     map.xview_moveto((player.posX-5)/(mapSize+2)) #show player position + 5 tiles to the left
     map.yview_moveto((player.posY-5)/(mapSize+2)) #show player position + 5 tiles up  
+
+def updateTile(x,y):
+    biome = gameMap[y][x]
+    name = str(x)+" "+str(y)
+    for t in map.find_withtag(name):
+        if(map.type(t) == "rectangle"):
+            map.itemconfig(t,fill=biome.color)
+        elif(map.type(t) == "text"):
+            map.itemconfig(t,text=biome.icon)
 
 """
 input related functions
@@ -354,6 +362,9 @@ def updateCombat(): #set labels/meters to match new stats
 
 def startCombat(): #start combat by generating an enemy and disabling unrelated tabs
     global currentEnemy
+    if not (gameMap[player.posY][player.posX].enemies):
+        print("no enemies in this biome")
+        return
     currentEnemy = random.choice(gameMap[player.posY][player.posX].enemies) #choose an enemy from the biome the player is in
     currentEnemy.maxHealth += round(random.uniform(-currentEnemy.maxHealth/2,currentEnemy.maxHealth/2)) #add some variation on their health
     currentEnemy.health = currentEnemy.maxHealth  
@@ -395,10 +406,12 @@ def endCombat(winner="none"):#end the combat with default value of no winner
 variables
 """
 #biome info
-biomes = [Biome("toxic dump","green","-",[Mob("Slime",5,5,0,["glomps","slops"])],Biome("plains","limegreen","-",None)),
-          Biome("wasteland","darkkhaki","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])],Biome("desert","palegoldenrod","⁕",None)),
-          Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])]),
-          Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])])]
+biomes = [
+    Biome("toxic dump","gold","-",[Mob("Slime",5,5,0,["glomps","slops"])],Biome("plains","limegreen","-",None)),
+    Biome("wasteland","coral","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])],Biome("desert","palegoldenrod","⁕",None)),
+    Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])],Biome("forest","seagreen","⇑",None)),
+    Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])],Biome("ocean","dodgerblue","≈",None))
+    ]
 
 #list of every item
 items = [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
@@ -412,7 +425,7 @@ recipes = [Recipe([items[0],items[1]],items[2]),
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
-mapSize = 50 #size of the map
+mapSize = 4 #size of the map
 
 loadGame = False #load game or not
 
