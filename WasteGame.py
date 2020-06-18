@@ -235,6 +235,10 @@ def onMove(): #things to do when the player moves
         pass
     gameMap[player.posY][player.posX].clean() #'clean' the biome once you've done something
 
+def rebind(): #rebinds the arrow keys because scrolling on the pane messes it up
+    app.unbindKeys(["Left","Right","Up","Down"])
+    app.bindKeys(["Left","Right","Up","Down"], keys)
+
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main") #find the current tab
     
@@ -562,8 +566,9 @@ When in combat use A to attack, B to block and R to run.""")
 app.stopTab()
 app.stopTabbedFrame()
 
-
-app.addLabel("output","",row=1,column=3)
+app.startScrollPane("outputPane",row=1,column=3)
+app.addLabel("output","")
+app.stopScrollPane()
 
 app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
@@ -581,5 +586,8 @@ updateMap()
 
 gameMap[player.posY][player.posX].clean() #'clean' the starting biome
 
+
 app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
+
+app.registerEvent(rebind) #every second rebind the arrow keys
 app.go()
