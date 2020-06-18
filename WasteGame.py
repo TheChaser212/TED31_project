@@ -96,6 +96,7 @@ class Biome: #class for biomes
     
     def clean(self):
         if(self.cleanBiome != None):
+            output("Cleaned the "+self.name)
             gameMap[player.posY][player.posX] = self.cleanBiome
             updateTile(player.posX,player.posY)
 
@@ -433,7 +434,7 @@ mapSize = 50 #size of the map
 loadGame = False #load game or not
 
 #player stats
-player = Player("player",#name
+player = Player("Player",#name
                 10,#health
                 11,#damage
                 10,#armor
@@ -445,7 +446,7 @@ player = Player("player",#name
                 
 
 #enemy that's being fought
-currentEnemy = Mob("enemy",#name
+currentEnemy = Mob("Enemy",#name
                    10,#health
                    13,#damage
                    10,#armor
