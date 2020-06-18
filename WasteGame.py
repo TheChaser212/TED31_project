@@ -126,7 +126,7 @@ class Recipe: #class for recipes
 functions
 """
 def output(text): #set output label text to something
-    app.setLabel("output",text)
+    app.setLabel("output","%s\n%s"%(app.getLabel("output"),text))
 
 def loot():
     item = random.choice(items)
@@ -276,15 +276,15 @@ def keys(key): #what to do whenever a key is pressed
             if(key == "a"):
                 damage = max(player.damage - currentEnemy.armor,1) #prevent negative damage
                 currentEnemy.health -= damage
-                
+                output(player.attackDesc(currentEnemy,damage))
                 if(enemyAttacks):
                     damage = max(currentEnemy.damage - player.armor,1) #prevent negative damage
                     player.health -= damage
-                    output(player.attackDesc(currentEnemy,damage)+"\n"+currentEnemy.attackDesc(player,damage))
-                else:
-                    output(player.attackDesc(currentEnemy,damage))
+                    output(currentEnemy.attackDesc(player,damage))
+                    
             elif(key == "b"):
                 output("You block the %s's attack!"%currentEnemy.name)
+                
             elif(key == "r"):
                 if(enemyAttacks):
                     damage = max(currentEnemy.damage - player.armor,1) #prevent negative damage
@@ -390,7 +390,7 @@ def endCombat(winner="none"):#end the combat with default value of no winner
     
     #stuff do based on who won
     if(winner == "enemy"):
-        output("You died")
+        output("You lost")
     elif(winner == "player"):
         output("You win")
         player.maxHealth += 1
@@ -563,13 +563,15 @@ app.stopTab()
 app.stopTabbedFrame()
 
 
+app.addLabel("output","",row=1,column=3)
+
 app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
 
 #output
 app.setStretch('column')
 app.setSticky('ew')
-app.addLabel("output","did something",colspan=3)
+
 
 if(loadGame):#load by default or not
     load()
