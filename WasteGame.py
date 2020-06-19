@@ -105,7 +105,7 @@ class Recipe: #class for recipes
         self.required = required #list of items needed
         self.crafted = crafted #what is made
         
-    def craft(self):
+    def craft(self): #craft the recipe's item
         for requirement in self.required:
             if(not (player.inventory.count(requirement) >= 1)): #if not at least one of the required item (may cause issues if a recipe needs multiple of the same item)
                 #print("failed to craft "+self.crafted.name)
@@ -129,7 +129,7 @@ functions
 def output(text): #set output label text to something
     app.setLabel("output","%s\n%s"%(app.getLabel("output"),text))
 
-def loot():
+def loot(): #add a random item to the inventory
     item = random.choice(items)
     output("You pick up a "+item.name)
     player.inventory.append(item)
@@ -590,5 +590,5 @@ gameMap[player.posY][player.posX].clean() #'clean' the starting biome
 
 app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
 
-app.registerEvent(rebind) #every second rebind the arrow keys
+app.registerEvent(rebind) #every second rebind the arrow keys because scrolling unbinds them
 app.go()
