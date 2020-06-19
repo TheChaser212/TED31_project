@@ -179,6 +179,18 @@ def load(): #load player stats and map
     output("Game loaded")
     updateMap() #update map at end because player pos might have changed
 
+def startGame(widget):
+    if (widget == "Continue"):
+        load()
+        
+    elif (widget == "New Game"):
+        generateMap()
+    
+    app.setTabbedFrameDisableAllTabs("main", disabled=False)
+    app.setTabbedFrameDisabledTab("main", "combat", disabled=True)
+    app.hideTabbedFrameTab("main","title")
+    app.setTabbedFrameDisabledTab("main", "title", disabled=True)
+
 
 """
 map functions
@@ -188,8 +200,9 @@ def generateMap(): #create new map
         gameMap.append([])
         for x in range(mapSize):
             gameMap[y].append(random.choice(biomes)) #add a random biome for each tile
+    gameMap[player.posY][player.posX].clean() #'clean' the starting biome
     updateMap()
-    saveMap() #save the map once it's generated
+    #saveMap() #save the map once it's generated
 
 def updateMap(): #clear all the tiles on the map and readd them
     app.clearCanvas("map")
@@ -465,18 +478,21 @@ app.createMenu("File")
 app.addMenuItem("File", "Save", func=saveAll)
 app.addMenuItem("File", "Load", func=load)
 
-
-app.setStretch('column')
-app.setSticky('esw')
-app.addLabel("title", "Waste Adventure")
-
-
 app.setSticky("nesw")
 app.setStretch("both")
 
 app.startTabbedFrame("main")#tabs in the gui
 app.setTabbedFrameTabExpand("main", expand=True) #expand to fit whole gui
 app.setTabbedFrameChangeCommand("main", updateInventory) #when changing tab call updateInventory(), a return in that function prevents it from happening on wrong tab
+
+
+app.startTab("title")
+app.setStretch('column')
+app.setSticky('esw')
+app.addLabel("title", "Waste Adventure")
+app.addButton("Continue", startGame)
+app.addButton("New Game", startGame)
+app.stopTab()
 
 
 #map tab
@@ -531,7 +547,7 @@ app.stopTab()
 app.startTab("combat")
 app.addLabel("fight","combat")
 
-#player
+#player side of combat
 app.startFrame("player",row=0,column=0)
 app.addLabel("playerName","Player")
 
@@ -545,7 +561,7 @@ app.stopFrame()
 
 app.addVerticalSeparator(row=0,column=1)
 
-#enemy
+#enemy side of combat
 app.startFrame("enemy",row=0,column=2)
 app.addLabel("enemyName","Name")
 
@@ -567,25 +583,16 @@ When in combat use A to attack, B to block and R to run.""")
 app.stopTab()
 app.stopTabbedFrame()
 
-app.startScrollPane("outputPane",row=1,column=3)
+
+#output log
+app.startScrollPane("outputPane",row=0,column=3)
 app.addLabel("output","")
 app.stopScrollPane()
 
-app.setTabbedFrameDisabledTab("main","combat", True) #disable combat tab while not in combat
 
-
-#output
-app.setStretch('column')
-app.setSticky('ew')
-
-
-if(loadGame):#load by default or not
-    load()
-else:
-    generateMap()
-updateMap()
-
-gameMap[player.posY][player.posX].clean() #'clean' the starting biome
+#disable all tabs but title screen
+app.setTabbedFrameDisableAllTabs("main", disabled=True)
+app.setTabbedFrameDisabledTab("main", "title", disabled=False)
 
 
 app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
