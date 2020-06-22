@@ -54,6 +54,7 @@ class Player(Mob): #subclass of Mob
         self.color = "white" #default color
         self.inventory = inventory #list of items player has
         self.equipped = {"weapon":None,"head":None,"body":None,"legs":None} #slots for equipment which are empty by default
+        self.amountCleaned = 0 #amount of tiles cleaned
         
     def updateStats(self): #set stats to match equipment
         self.damage = 0
@@ -95,6 +96,9 @@ class Biome: #class for biomes
             output("Cleaned the "+self.name)
             gameMap[player.posY][player.posX] = self.cleanBiome
             updateTile(player.posX,player.posY)
+            player.amountCleaned += 1
+            if player.amountCleaned >= mapSize**2: #if cleaned every tile
+                endGame()
 
 class Recipe: #class for recipes
     def __init__(self,required,crafted):
@@ -252,9 +256,6 @@ def rebind(): #rebinds the arrow keys because scrolling on the pane messes it up
 def keys(key): #what to do whenever a key is pressed
     currentTab = app.getTabbedFrameSelectedTab("main") #find the current tab
     
-    if(key == "c"):
-        recipes[0].craft()
-    
     if(currentTab == "map"): #movement on map
         playerObj = map.find_withtag("player") #get all canvas objects with 'player' tag
         if(key == "Left"):
@@ -346,11 +347,11 @@ def updateInventory(): #add labels for all the items in the player's inventory a
             app.setLabelTooltip(slot, "")
 
 
-def itemSelect(widget): #equip item that is dropped by mouse
+def itemSelect(widget): #equip item that is clicked by mouse
     player.equip(widget)
 
 
-def showRecipe(widget):
+def showRecipe(widget): #change the label to show information on recipe
     app.openFrame("craftInfo")
     app.emptyCurrentContainer()
     app.addLabel("craftDesc",widget.description())
@@ -398,92 +399,95 @@ def endCombat(winner="none"):#end the combat with default value of no winner
 
     app.setTabbedFrameSelectedTab("main","map",False) 
     
-    #stuff do based on who won
+    #do stuff based on who won
     if(winner == "enemy"):
         output("You lost")
     elif(winner == "player"):
         output("You win")
-        player.maxHealth += 1
+        player.maxHealth += 1 #add one to player's health each time they win
         loot()
     elif(winner == "none"): #player ran away
-        output("You managed to ran away")
-    else: #shouldn't ever happen
+        output("You managed to run away")
+    else: #shouldn't ever happen but just in case
         output("Something went wrong")
 
 
 """
 variables
 """
-#biome info
+#biome list
 biomes = [
-    Biome("toxic dump","gold","-",[Mob("Slime",5,5,0,["glomps","slops"])],Biome("plains","limegreen","-",None)),
-    Biome("wasteland","coral","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])],Biome("desert","palegoldenrod","⁕",None)),
-    Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])],Biome("forest","seagreen","⇑",None)),
-    Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])],Biome("ocean","dodgerblue","≈",None))
+    Biome("toxic dump","gold","-",[Mob("Toxic Sludge",5,5,0,["glomps","slops"])],Biome("plains","limegreen","-",None)), #toxic dump cleans to plains
+    Biome("wasteland","coral","⁕",[Mob("Radscorpion",25,15,5,["stings","claws"])],Biome("desert","palegoldenrod","⁕",None)), #wasteland cleans to desert
+    Biome("burnt forest","sienna","⇑",[Mob("Burning Gorilla",5,25,9,["burns","clubs"])],Biome("forest","seagreen","⇑",None)), #burnt forest cleans to forest
+    Biome("polluted ocean","darkorchid","≈",[Mob("Plastic Kraken",50,50,10,["stings","claws"])],Biome("ocean","dodgerblue","≈",None)) #polluted ocean cleans to ocean
     ]
 
 #list of every item
-items = [Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
-        Armor("Chestplate","A large hunk of metal",27,"body"),
-        Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])]
+items = [
+    Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
+    Armor("Chestplate","A large hunk of metal",27,"body"),
+    Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])
+    ]
 
 #list of every recipe
 #need to use index of the item in the items list so that the Item object is correct
-recipes = [Recipe([items[0],items[1]],items[2]),
-           Recipe([items[2],items[1]],items[0])] 
+recipes = [
+    Recipe([items[0],items[1]],items[2]),#create big sword with sword and chestplate
+    Recipe([items[2],items[1]],items[0]),#create sword with big sword and chestplate
+    ] 
 
 iconSize = 20 #size of each tile on the map in pixels
 gameMap = []
 mapSize = 50 #size of the map
 
-loadGame = False #load game or not
-
 #player stats
 player = Player("Player",#name
                 10,#health
-                11,#damage
-                10,#armor
+                5,#damage
+                0,#armor
                 ["slashes","stabs"],#attack types
                 round(mapSize/2),#x position
                 round(mapSize/2),#y position
                 []#inventory
                 )
-                
 
 #enemy that's being fought
 currentEnemy = Mob("Enemy",#name
-                   10,#health
-                   13,#damage
-                   10,#armor
+                   1,#health
+                   1,#damage
+                   1,#armor
                    ["jabs","claws"]#attack types
                    )
-
-draggedItem = 0 #currently dragged widget
 
 
 """
 setup and start gui
 """
 app = gui("Waste Adventure")
+app.setSticky("nesw")
+app.setStretch("both")
 
+
+#save/load menu
 app.createMenu("File")
 app.addMenuItem("File", "Save", func=saveAll)
 app.addMenuItem("File", "Load", func=load)
 
-app.setSticky("nesw")
-app.setStretch("both")
 
-app.startTabbedFrame("main")#tabs in the gui
+#tabs in the gui
+app.startTabbedFrame("main")
 app.setTabbedFrameTabExpand("main", expand=True) #expand to fit whole gui
 app.setTabbedFrameChangeCommand("main", updateInventory) #when changing tab call updateInventory(), a return in that function prevents it from happening on wrong tab
 
 
+#title tab
 app.startTab("title")
 app.setStretch('column')
 app.setSticky('esw')
 app.addLabel("title", "Waste Adventure")
-app.addButton("Continue", startGame)
-app.addButton("New Game", startGame)
+app.addButton("Continue", startGame) #load save
+app.addButton("New Game", startGame) #create new save
 app.stopTab()
 
 
@@ -503,12 +507,12 @@ app.addVerticalSeparator(row=0,column=1)
 
 app.startFrame("equipped",row=0,column=2) #equipped items
 itemRow = 0
-for slot in player.equipped:
+for slot in player.equipped: #create a label for each equipment slot
     app.addLabel("%s title"%slot,slot.capitalize(),row=itemRow,column=2)
     app.addLabel(slot,player.equipped[slot],row=itemRow,column=3)
     app.setLabelRelief(slot,"ridge")
     app.setLabelTooltip(slot, player.equipped[slot])
-    app.setLabelSubmitFunction(slot, player.unEquip)
+    app.setLabelSubmitFunction(slot, player.unEquip) #unequip on click
     
     itemRow += 1
 app.stopFrame()
@@ -519,12 +523,12 @@ app.stopTab()
 #crafting tab
 app.startTab("crafting")
 app.startFrame("recipes",row=0,column=0)
-for recipe in recipes:
+for recipe in recipes: #recipe list doesn't change so only needs to be done at start of gui
     app.setSticky("ew")  
     app.addLabel(recipe,recipe.crafted.name)
     app.setLabelTooltip(recipe, recipe.description())
     app.setLabelRelief(recipe,"raised")
-    app.setLabelSubmitFunction(recipe, showRecipe)
+    app.setLabelSubmitFunction(recipe, showRecipe) #on click
 app.stopFrame()
 
 app.addVerticalSeparator(row=0,column=1)
@@ -568,6 +572,7 @@ app.stopFrame()
 app.stopTab()
 
 
+#help tab
 app.startTab("help")
 app.addLabel("helpLabel","""Use the arrow keys to move around the map.
 Click or drag items you want to equip.
@@ -587,7 +592,7 @@ app.setTabbedFrameDisableAllTabs("main", disabled=True)
 app.setTabbedFrameDisabledTab("main", "title", disabled=False)
 
 
-app.bindKeys(["Left","Right","Up","Down","a","b","r","c"], keys)
+app.bindKeys(["Left","Right","Up","Down","a","b","r"], keys) #bind these keys to 'keys' function
 
 app.registerEvent(rebind) #every second rebind the arrow keys because scrolling unbinds them
 app.go()
