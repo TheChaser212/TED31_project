@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from appJar import gui #gui module
-import random #random stuff
+import random #random numbers
 import pickle #saving module
 
 """
@@ -43,7 +43,7 @@ class Mob: #class that encompasses all characters
         self.attackTypes = attackTypes #list of verbs used when attacking
     
     def attackDesc(self,other,damage): #description of combat between two mobs
-        return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attacks at other, doing num damage
+        return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attackTypes at other, doing num damage
 
 class Player(Mob): #subclass of Mob
     def __init__(self,name,health,damage,armor,attackTypes,posX,posY,inventory):
@@ -59,7 +59,7 @@ class Player(Mob): #subclass of Mob
     def updateStats(self): #set stats to match equipment
         self.damage = 0
         self.armor = 0
-        for item in self.equipped:
+        for item in self.equipped: #go through each equipped item and add their stats to the player
             if hasattr(self.equipped[item], "damage"): #make sure it actually has a damage
                 self.damage += self.equipped[item].damage #for each equipped item that provides damage add it to player damage
             
@@ -70,15 +70,14 @@ class Player(Mob): #subclass of Mob
         if hasattr(item, "slot"): #in case players try to equip items that can't be equipped
             self.equipped[item.slot] = item
             output("Equipped %s"%item.name.lower())
-            self.updateStats()
+            self.updateStats() #update stats when something is equipped
+            updateInventory() #update labels to match what's now equipped
         else: 
             output("You can't equip that!")
-        updateInventory()
             
     def unEquip(self,slot): #unequip an item
-        item = self.equipped[slot]
         if(self.equipped[slot] != None): #can't unequip nothing
-            output("Unequipped %s"%item.name.lower()) #give player feedback
+            output("Unequipped %s"%self.equipped[slot].name.lower()) #give player feedback
             self.equipped[slot] = None
             self.updateStats()
             updateInventory()
@@ -97,7 +96,7 @@ class Biome: #class for biomes
             gameMap[player.posY][player.posX] = self.cleanBiome
             updateTile(player.posX,player.posY)
             player.amountCleaned += 1
-            if player.amountCleaned >= mapSize**2: #if cleaned every tile
+            if player.amountCleaned >= mapSize**2: #if cleaned every tile (mapSize squared)
                 endGame()
 
 class Recipe: #class for recipes
