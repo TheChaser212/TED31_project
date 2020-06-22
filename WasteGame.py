@@ -134,6 +134,10 @@ def loot(): #add a random item to the inventory
     output("You pick up a "+item.name)
     player.inventory.append(item)
 
+def endGame():
+    app.removeAllWidgets()
+    app.addLabel("endText","You've saved the planet!")
+
 """
 saving/loading functions
 """
