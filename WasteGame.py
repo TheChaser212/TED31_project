@@ -14,33 +14,33 @@ class Item: #class for items the player can collect
     def description(self): #return description of item
         return self.desc
         
-class Weapon(Item): #subclass of item
+class Weapon(Item): #subclass of item for weapons used by the player
     def __init__(self,name,desc,damage,attackTypes):
         super().__init__(name,desc) #calls init of item class
-        self.damage = damage
-        self.attackTypes = attackTypes
+        self.damage = damage #integer value for damage
+        self.attackTypes = attackTypes #list of verbs used when attacking
         self.slot = "weapon" #all weapons are equipped in weapon slot (by default)
     
     def description(self): #return description of weapon
         return "%s, it does %i damage and you use it as a weapon"%(super().description(),self.damage) #Item() description + extra info
 
-class Armor(Item): #subclass of item
+class Armor(Item): #subclass of item for armor
     def __init__(self,name,desc,armor,slot):
         super().__init__(name,desc) #calls init of item class
-        self.armor = armor
-        self.slot = slot
+        self.armor = armor #armor value
+        self.slot = slot #slot it's equipped in
     
     def description(self): #return description of armor
         return "%s, it blocks %i damage and you wear it on your %s"%(super().description(),self.armor,self.slot.lower()) #Item() description + extra info
 
 class Mob: #class that encompasses all characters
     def __init__(self,name,health,damage,armor,attackTypes):
-        self.name = name
-        self.health = health
-        self.maxHealth = health
-        self.damage = damage
-        self.armor = armor
-        self.attackTypes = attackTypes
+        self.name = name #name of mob
+        self.health = health #current health of mob
+        self.maxHealth = health #max health of mob (equal to current at beginning)
+        self.damage = damage #damage mob does
+        self.armor = armor #amount of armor mob has
+        self.attackTypes = attackTypes #list of verbs used when attacking
     
     def attackDesc(self,other,damage): #description of combat between two mobs
         return "%s %s at %s, doing %i damage"%(self.name,random.choice(self.attackTypes),other.name,damage) # thing attacks at other, doing num damage
@@ -48,33 +48,29 @@ class Mob: #class that encompasses all characters
 class Player(Mob): #subclass of Mob
     def __init__(self,name,health,damage,armor,attackTypes,posX,posY,inventory):
         super().__init__(name,health,damage,armor,attackTypes)
-        self.posX = posX
-        self.posY = posY
+        self.posX = posX #X position on map
+        self.posY = posY #Y position on map
         self.icon = "X" #default icon
         self.color = "white" #default color
-        self.inventory = inventory
-        self.equipped = {"weapon":None,"head":None,"body":None,"legs":None} #nothing equipped by default
+        self.inventory = inventory #list of items player has
+        self.equipped = {"weapon":None,"head":None,"body":None,"legs":None} #slots for equipment which are empty by default
         
     def updateStats(self): #set stats to match equipment
         self.damage = 0
         self.armor = 0
         for item in self.equipped:
-            try: #make sure it actually has a damage
-                self.damage += self.equipped[item].damage
-            except:
-                pass
+            if hasattr(self.equipped[item], "damage"): #make sure it actually has a damage
+                self.damage += self.equipped[item].damage #for each equipped item that provides damage add it to player damage
             
-            try: #make sure it actually has armor
-                self.armor += self.equipped[item].armor
-            except:
-                pass
+            if hasattr(self.equipped[item], "armor"): #make sure it actually has armor
+                self.armor += self.equipped[item].armor #for each equipped item that provides armor add it to player armor
     
     def equip(self,item): #equip an item
-        try: #in case players try to equip items that can't be equipped
+        if hasattr(item, "slot"): #in case players try to equip items that can't be equipped
             self.equipped[item.slot] = item
             output("Equipped %s"%item.name.lower())
             self.updateStats()
-        except: 
+        else: 
             output("You can't equip that!")
         updateInventory()
             
@@ -334,7 +330,7 @@ def updateInventory(): #add labels for all the items in the player's inventory a
             app.addLabel(i,i.name)
             app.setLabelTooltip(i, i.description())
             app.setLabelRelief(i,"raised")
-            app.setLabelDragFunction(i, [itemDrag, itemDrop])
+            app.setLabelSubmitFunction(i, itemSelect) #what to do when label is clicked
         except: #if multiple of the same item set the label to show the amount
             app.setLabel(i,"%s x%i"%(i.name,player.inventory.count(i))) #Thing xNum
     app.stopFrame()
@@ -342,20 +338,16 @@ def updateInventory(): #add labels for all the items in the player's inventory a
     
     for slot in player.equipped:
         item = player.equipped[slot]
-        try: #make sure it's an actual equipment
+        if item != None: #make sure it's an actual equipment
             app.setLabel(slot,item.name)
             app.setLabelTooltip(slot, item.description())
-        except:#if no item equipped in slot
+        else:#if no item equipped in slot
             app.setLabel(slot,"Nothing")
             app.setLabelTooltip(slot, "")
 
-def itemDrag(widget): #find the item that's being dragged by mouse
-    global draggedItem
-    draggedItem = widget
-    app.raiseFrame("equipped")
 
-def itemDrop(widget): #equip item that is dropped by mouse
-    player.equip(draggedItem)
+def itemSelect(widget): #equip item that is dropped by mouse
+    player.equip(widget)
 
 
 def showRecipe(widget):
@@ -391,7 +383,7 @@ def startCombat(): #start combat by generating an enemy and disabling unrelated 
     app.setTabbedFrameDisabledTab("main","map", True) #disable all other tabs
     app.setTabbedFrameDisabledTab("main","inventory", True)
     app.setTabbedFrameDisabledTab("main","crafting", True)
-    app.setTabbedFrameDisabledTab("main","combat", False)    
+    app.setTabbedFrameDisabledTab("main","combat", False) #enable combat tab 
 
     app.setTabbedFrameSelectedTab("main","combat",False) #go to combat tab
     
