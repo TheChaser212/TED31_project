@@ -105,14 +105,15 @@ class Recipe: #class for recipes
         self.crafted = crafted #what is made
         
     def craft(self): #craft the recipe's item
+        tempInv = player.inventory.copy()
         for requirement in self.required:
-            if(not (player.inventory.count(requirement) >= 1)): #if not at least one of the required item (may cause issues if a recipe needs multiple of the same item)
-                #print("failed to craft "+self.crafted.name)
+            try:
+                tempInv.remove(requirement)
+            except:
                 output("You don't have a %s!"%requirement.name.lower())
                 return #can't craft something if you don't have the requirements
         
-        for requirement in self.required:
-            player.inventory.remove(requirement) #remove each required item
+        player.inventory = tempInv.copy()
         
         output("Crafted a "+self.crafted.name.lower())
         player.inventory.append(self.crafted) #add the item
@@ -120,7 +121,11 @@ class Recipe: #class for recipes
     def description(self):
         desc = "To craft the %s you need: "%self.crafted.name.lower()
         for requirement in self.required:
-            desc += "\n%s"%requirement.name.lower()
+            if(self.required.count(requirement) == 1):
+                desc += "\n%s"%requirement.name.lower()   
+            else:
+                desc += "\n%s x%i"%(requirement.name.lower(),self.required.count(requirement))
+                break
         return desc
 """
 functions
@@ -430,14 +435,16 @@ biomes = [
 items = [
     Weapon("Sword","A stabby metal object",11,["Slash","Stab"]),
     Armor("Chestplate","A large hunk of metal",27,"body"),
-    Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"])
+    Weapon("Big Sword","A big stabby metal object",1000,["Smash","Slam"]),
+    Item("Scrap Metal","A piece of scrap metal")
     ]
 
 #list of every recipe
 #need to use index of the item in the items list so that the Item object is correct
 recipes = [
-    Recipe([items[0],items[1]],items[2]),#create big sword with sword and chestplate
-    Recipe([items[2],items[1]],items[0]),#create sword with big sword and chestplate
+    Recipe([items[0],items[3],items[3],items[3],items[3],items[3]],items[2]),#create big sword with sword and 5 scrap metal
+    Recipe([items[3],items[3]],items[1]),#create chestplate with 2 scrap metal
+    Recipe([items[3]],items[0])#create sword with 1 scrap metal
     ] 
 
 iconSize = 20 #size of each tile on the map in pixels
