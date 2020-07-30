@@ -2,6 +2,7 @@
 from appJar import gui #gui module
 import random #random numbers
 import pickle #saving module
+import os #checking file exists
 
 """
 Define classes
@@ -118,7 +119,7 @@ class Recipe: #class for recipes
         output("Crafted a "+self.crafted.name.lower())
         player.inventory.append(self.crafted) #add the item
     
-    def description(self):
+    def description(self): #description of the recipe
         desc = "To craft the %s you need: "%self.crafted.name.lower()
         for requirement in self.required:
             if(self.required.count(requirement) == 1):
@@ -138,7 +139,7 @@ def loot(): #add a random item to the inventory
     output("You pick up a "+item.name)
     player.inventory.append(item)
 
-def endGame():
+def endGame(): #what to do when game finishes
     app.removeAllWidgets()
     app.addLabel("endText","You've saved the planet!")
 
@@ -166,28 +167,28 @@ def load(): #load player stats and map
         file = open("map.txt","rb")
         gameMap = pickle.load(file)
         file.close()
-    except FileNotFoundError: #create a map if no file found (file will be created when it's saved)
+    except: #create a map if no file found (file will be created when it's saved)
         generateMap()
     
     try: #don't open files that don't exist
         file = open("player.txt","rb")
         player = pickle.load(file)
         file.close()
-    except FileNotFoundError: #create player with default stats if no file found (file will be created when it's saved)
-        player = Player("player",#name
+    except: #create player with default stats if no file found (file will be created when it's saved)
+        player = Player("Player",#name
                 10,#health
                 5,#damage
-                10,#armor
-                ["Slash","Stab"],#attack types
-                mapSize/2,#x position
-                mapSize/2,#y position
-                [Weapon("Sword","A stabby metal object",10,["Slash","Stab"]),
-                Armor("Chestplate","A large hunk of metal",27,"Body")])
+                0,#armor
+                ["slashes","stabs"],#attack types
+                round(mapSize/2),#x position
+                round(mapSize/2),#y position
+                []#inventory
+                )
     
     output("Game loaded")
     updateMap() #update map at end because player pos might have changed
 
-def startGame(widget):
+def startGame(widget): #do stuff based on button chosen
     if (widget == "Continue"):
         load()
         
@@ -471,6 +472,7 @@ currentEnemy = Mob("Enemy",#name
                    )
 
 
+
 """
 setup and start gui
 """
@@ -496,7 +498,10 @@ app.startTab("title")
 app.setStretch('column')
 app.setSticky('esw')
 app.addLabel("title", "Waste Adventure")
-app.addButton("Continue", startGame) #load save
+
+if(os.path.isfile('./map.txt')):#don't create continue button if no file to load
+    if(os.path.isfile('./player.txt')):
+        app.addButton("Continue", startGame) #load save
 app.addButton("New Game", startGame) #create new save
 app.stopTab()
 
@@ -601,7 +606,7 @@ app.stopScrollPane()
 app.setTabbedFrameDisableAllTabs("main", disabled=True)
 app.setTabbedFrameDisabledTab("main", "title", disabled=False)
 
-
+generateMap()
 app.bindKeys(["Left","Right","Up","Down","a","b","r"], keys) #bind these keys to 'keys' function
 
 app.registerEvent(rebind) #every second rebind the arrow keys because scrolling unbinds them
