@@ -147,14 +147,20 @@ def endGame(): #what to do when game finishes
 saving/loading functions
 """
 def saveMap(): #save map
-    file = open("map.txt","wb")
-    pickle.dump(gameMap, file)
-    file.close()
+    try:
+        file = open("map.txt","wb")
+        pickle.dump(gameMap, file)
+        file.close()
+    except:
+        output("Unable to save map")
     
 def saveStats(): #save player stats
-    file = open("player.txt","wb")
-    pickle.dump(player,file)
-    file.close()    
+    try:
+        file = open("player.txt","wb")
+        pickle.dump(player,file)
+        file.close()    
+    except:
+        output("Unable to save player file")
 
 def saveAll(): #save everything
     output("Game saved")
@@ -194,6 +200,11 @@ def startGame(widget): #do stuff based on button chosen
         
     elif (widget == "New Game"):
         generateMap()
+    
+    #save/load menu, added after game is started so people don't save when nothing is made
+    
+    app.addMenuItem("File", "Save", func=saveAll)
+    app.addMenuItem("File", "Load", func=load)    
     
     app.setTabbedFrameDisableAllTabs("main", disabled=False)
     app.setTabbedFrameDisabledTab("main", "combat", disabled=True)
@@ -481,10 +492,7 @@ app.setSticky("nesw")
 app.setStretch("both")
 
 
-#save/load menu
-app.createMenu("File")
-app.addMenuItem("File", "Save", func=saveAll)
-app.addMenuItem("File", "Load", func=load)
+
 
 
 #tabs in the gui
@@ -505,6 +513,8 @@ if(os.path.isfile('./map.txt')):#don't create continue button if no file to load
 app.addButton("New Game", startGame) #create new save
 app.stopTab()
 
+#File menu for saving/loading, functions added after game is started
+app.createMenu("File")
 
 #map tab
 app.startTab("map")
